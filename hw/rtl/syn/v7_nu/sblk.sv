@@ -1,9 +1,9 @@
 // SuperBlock
 
 module sblk(/*AUTOARG*/
-            // Inputs
-            clk_h, clk_l
-            );
+   // Inputs
+   clk_h, clk_l, rst_n, act_wr_data, act_wr_en, w_wr_data, w_wr_en
+   );
 
    // number of supertile inside the superblock
    parameter NTILE = 4;
@@ -179,7 +179,7 @@ module sblk(/*AUTOARG*/
       end
    end
 
-     
+   
    // mux for psum selection
    reg [48-1:0] psum_stile_in;
    always_ff @(posedge clk_h or negedge rst_n) begin : proc_psum_stile_in
@@ -203,8 +203,8 @@ module sblk(/*AUTOARG*/
    wire [PSUM_BUF_BIT*2-1:0] psum_buf_rd_data;
    wire [PSUM_BUF_BIT*2-1:0] psum_buf_wr_data;
 
-   wire [10-1:0]              psum_buf_rd_addr;
-   wire [10-1:0]              psum_buf_wr_addr;
+   wire [10-1:0]             psum_buf_rd_addr;
+   wire [10-1:0]             psum_buf_wr_addr;
 
    wire                      psum_buf_wr_en;
 
