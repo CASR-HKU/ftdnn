@@ -1,9 +1,11 @@
+`timescale 1 ns / 1 ns
+
 module sblk_ctrl(/*AUTOARG*/
    // Outputs
-   act_data_in_req, w_rd_addr, act_rd_addr_hbit, act_wr_addr_hbit,
-   act_wr_en, psum_rd_addr, psum_wr_addr_delay, psum_wr_en,
+   act_in_req, w_rd_addr, act_rd_addr_hbit, act_wr_addr_hbit,
+   act_wr_en, psum_wr_addr, psum_wr_en, psum_rd_addr,
    // Inputs
-   inst_data, inst_en, act_data_in_vld
+   clk_l, rst_n, inst_data, inst_en, act_in_vld, act_in
    );
 
    parameter N_TILE = 4;
@@ -28,34 +30,42 @@ module sblk_ctrl(/*AUTOARG*/
    //FIXME: delay length between psum read and psum write back, calculated with N_TILE
    parameter WB_DELAY_CYCLE = N_TILE + 8; 
 
+   int ii;
+
+   input wire clk_l;
+   input wire rst_n;
+
    // instruction input signal
    input wire [WID_INST-1:0] inst_data;
    input wire                inst_en;
 
    // request signal, one-cycle trigger for the batch act of al N_TILE stiles in one trip count
-   output reg                act_data_in_req;
-   input wire                act_data_in_vld;
+   output reg                act_in_req;
+   input wire                act_in_vld;
+   input wire [2*WID_ACT-1:0] act_in;
+
 
    output reg [WID_WADDR-1:0] w_rd_addr;
 
    output reg [WID_ACTADDR-2:0] act_rd_addr_hbit;
-   output wire [WID_ACTADDR-2:0] act_wr_addr_hbit;
-   output wire [N_TILE-1:0]      act_wr_en;
+   output reg [WID_ACTADDR-2:0] act_wr_addr_hbit;
+   output reg [N_TILE-1:0]      act_wr_en;
 
-   output wire [WID_PSUMADDR-1:0] psum_wr_addr_delay;
+   output wire [WID_PSUMADDR-1:0] psum_wr_addr;
    output wire [WID_PSUMADDR-1:0] psum_wr_en;
-   output reg [WID_PSUMADDR-1:0] psum_rd_addr;
-   reg [WID_PSUMADDR-1:0]        psum_wr_addr;   
+   output reg [WID_PSUMADDR-1:0]  psum_rd_addr;
+   // output wire status_sblk;
 
 
    reg [WID_INST-1:0]             inst_reg;
-   always_ff @(posedge clk or negedge rst_n) begin : proc_inst_reg
+   reg                            inst_en_d;
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_inst_reg
       if(~rst_n) begin
          inst_reg <= 0;
          inst_en_d <= 0;
       end else begin
          if (inst_en) begin
-           inst_reg <= inst_data;
+            inst_reg <= inst_data;
          end
          inst_en_d <= inst_en;
       end
@@ -80,50 +90,95 @@ module sblk_ctrl(/*AUTOARG*/
    reg [WID_INST_LN-1:0]  cnt_ln;
    reg [WID_INST_LP-1:0]  cnt_lp;
 
-   // status: 0: free, 1: busy
-   // reg [2-1:0]            status_sblk;
 
-   always_ff @(posedge clk or negedge rst_n) begin : proc_cnt_tp
+   wire comp_flag; 
+   reg [WB_DELAY_CYCLE-1:0] comp_flag_d;
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_comp_flag_d
+      if(~rst_n) begin
+         comp_flag_d <= 0;
+      end else begin
+         comp_flag_d[0] <= comp_flag;
+         for (ii=1; ii<WB_DELAY_CYCLE; ii=ii+1) begin
+            comp_flag_d[ii] <= comp_flag_d[ii-1];
+         end
+      end
+   end
+
+
+   // toggle for input act & compute. Status: 0: sblk free / one inst-trip unfinished; 1: one inst-trip finished
+   reg toggle_act_in;
+   reg toggle_act_in_d;
+   reg toggle_compute;
+   reg toggle_compute_d;
+
+   wire trip_start;
+   wire trip_finish;
+   wire inst_finish;   
+
+   // PROCESS: computation
+   // counters for computation
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_cnt_tp
       if(~rst_n) begin
          cnt_tp <= 0;
       end else begin
-         cnt_tp <= inst_en? 0 : (comp_flag? ((cnt_tp==n_tp-1)? 0 : cnt_tp + 1) : cnt_tp);
+         cnt_tp <= comp_flag? ((cnt_tp==n_tp-1)? 0 : cnt_tp + 1) : 0;
       end
    end   
 
-   always_ff @(posedge clk or negedge rst_n) begin : proc_cnt_tm
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_cnt_tm
       if(~rst_n) begin
          cnt_tm <= 0;
       end else begin
-         cnt_tm <= inst_en? 0 : (comp_flag? ((cnt_tp==n_tp-1)? ((cnt_tm==n_tm-1)? 0 : cnt_tm + 1) : cnt_tm) : cnt_tm);
+         cnt_tm <= comp_flag? ((cnt_tp==n_tp-1)? ((cnt_tm==n_tm-1)? 0 : cnt_tm + 1) : cnt_tm) : 0;
+         // cnt_tm <= inst_en_d? 0 : (comp_flag? ((cnt_tp==n_tp-1)? ((cnt_tm==n_tm-1)? 0 : cnt_tm + 1) : cnt_tm) : cnt_tm);
       end
    end
 
-   always_ff @(posedge clk or negedge rst_n) begin : proc_cnt_tn
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_cnt_tn
       if(~rst_n) begin
          cnt_tn <= 0;
       end else begin
-         cnt_tn <= inst_en? 0 : (comp_flag? (((cnt_tp==n_tp) & (cnt_tm==n_tm))? ((cnt_tn==n_tn)? 0 : cnt_tn + 1) : cnt_tn) : cnt_tn);
+         cnt_tn <= comp_flag? (((cnt_tp==n_tp-1) & (cnt_tm==n_tm-1))? ((cnt_tn==n_tn-1)? 0 : cnt_tn + 1) : cnt_tn) : 0;
+         // cnt_tn <= inst_en_d? 0 : (comp_flag? (((cnt_tp==n_tp-1) & (cnt_tm==n_tm-1))? ((cnt_tn==n_tn-1)? 0 : cnt_tn + 1) : cnt_tn) : cnt_tn);
       end
    end
 
-   always_ff @(posedge clk or negedge rst_n) begin : proc_cnt_ln
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_cnt_ln
       if(~rst_n) begin
          cnt_ln <= 0;
       end else begin
-         cnt_ln <= inst_en? 0 : (toggle_compute ^ ~toggle_compute_d)? ((cnt_ln==n_ln-1)? 0 : cnt_ln + 1) : cnt_ln;
+         cnt_ln <= inst_en_d? 0 : ((toggle_compute ^ toggle_compute_d)? ((cnt_ln==n_ln-1)? 0 : cnt_ln + 1) : cnt_ln);
       end
    end
 
-   always_ff @(posedge clk or negedge rst_n) begin : proc_cnt_lp
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_cnt_lp
       if(~rst_n) begin
          cnt_lp <= 0;
       end else begin
-         cnt_lp <= inst_en? 0 : (toggle_compute ^ ~toggle_compute_d)? ((cnt_ln==n_ln-1)? ((cnt_lp==n_lp-1)? 0 : cnt_lp+1) : cnt_lp);
+         cnt_lp <= inst_en_d? 0 : ((toggle_compute ^ toggle_compute_d)? ((cnt_ln==n_ln-1)? ((cnt_lp==n_lp-1)? 0 : cnt_lp+1) : cnt_lp) : cnt_lp);
       end
    end
 
-   always_ff @(posedge clk or negedge rst_n) begin : proc_act_rd_addr_hbit
+   assign trip_finish = (cnt_tp==n_tp-1 & cnt_tm==n_tm-1 & cnt_tn==n_tn-1);
+   assign trip_start = (cnt_tp==0 & cnt_tm==0 & cnt_tn==0);
+   assign inst_finish = (cnt_lp==n_lp & cnt_ln==n_ln & cnt_tp==0 & cnt_tm==0 & cnt_tn==0);   
+
+   // // set the flag to indicate computation has been finished
+   // reg flag_compute_stop;   
+   // always_ff @(posedge clk_l or negedge rst_n) begin : proc_flag_compute_stop
+   //    if(~rst_n) begin
+   //       flag_compute_stop <= 0;
+   //    end else begin
+   //       flag_compute_stop <= inst_en? 0 : ((cnt_tp==n_tp-1 & cnt_tm==n_tm-1 & cnt_tn==n_tn-1 & cnt_ln==n_ln-1 & cnt_lp==n_lp-1)? 1 : flag_compute_stop);
+   //    end
+   // end
+
+   // // status: 0: free, 1: busy
+   // assign status_sblk = flag_compute_stop;   
+
+
+   // read address for computation generated with the counter values
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_act_rd_addr_hbit
       if(~rst_n) begin
          act_rd_addr_hbit <= 0;
       end else begin
@@ -131,7 +186,7 @@ module sblk_ctrl(/*AUTOARG*/
       end
    end
 
-   always_ff @(posedge clk or negedge rst_n) begin : proc_w_rd_addr
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_w_rd_addr
       if(~rst_n) begin
          w_rd_addr <= 0;
       end else begin
@@ -140,57 +195,51 @@ module sblk_ctrl(/*AUTOARG*/
    end
 
    // psum_wr_addr is generated in concurrent with psum_rd_addr, with the same value. Delay for writing after DSP-chain propogation.
-   always_ff @(posedge clk or negedge rst_n) begin : proc_psum_rd_addr
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_psum_rd_addr
       if(~rst_n) begin
          psum_rd_addr <= 0;
-         psum_wr_addr <= 0;         
       end else begin
          psum_rd_addr <= cnt_tm + cnt_tp * n_tm + cnt_lp * n_tp * n_tm;
-         psum_wr_addr <= cnt_tm + cnt_tp * n_tm + cnt_lp * n_tp * n_tm;
       end
    end
 
 
    // delay psum_wr_addr signal
    int jj;
-   reg [WID_ACTADDR-2:0] psum_wr_addr_d[WB_DELAY_CYCLE-1:0];   
+   reg [WID_PSUMADDR-1:0] psum_wr_addr_d[WB_DELAY_CYCLE-1:0];
    always_ff @(posedge clk_l or negedge rst_n) begin : proc_psum_wr_addr_d
       if(~rst_n) begin
          for (jj=0; jj<WB_DELAY_CYCLE; jj=jj+1) begin
             psum_wr_addr_d[jj] <= 0;
          end
       end else begin
-         psum_wr_addr_d[0] <= psum_wr_addr;
+         psum_wr_addr_d[0] <= psum_rd_addr;
          for (jj=1; jj<WB_DELAY_CYCLE; jj=jj+1) begin
             psum_wr_addr_d[jj] <= psum_wr_addr_d[jj-1];
          end
       end
    end
 
-   // delay the status_sblk
-   // reg [2-1:0]  status_sblk_d[WB_DELAY_CYCLE-1:0];   
-   // always_ff @(posedge clk_l or negedge rst_n) begin : proc_status_sblk_d
-   //    if(~rst_n) begin
-   //       for (jj=0; jj<WB_DELAY_CYCLE; jj=jj+1) begin
-   //          status_sblk_d[jj] <= 0;
-   //       end
-   //    end else begin
-   //       status_sblk_d[0] <= status_sblk;
-   //       for (jj=1; jj<WB_DELAY_CYCLE; jj=jj+1) begin
-   //          status_sblk_d[jj] <= status_sblk_d[jj-1];
-   //       end
-   //    end
-   // end
-
    // psum wr signal: from the dealy unit.
-   assign psum_wr_addr_delay = psum_wr_addr_d[WB_DELAY_CYCLE-1];
-   assign psum_wr_en = comp_flag_d[WB_DELAY_CYCLE-1][0];
+   assign psum_wr_addr = psum_wr_addr_d[WB_DELAY_CYCLE-2];
+   assign psum_wr_en = comp_flag_d[WB_DELAY_CYCLE-1];
 
+   // toggle of computation to indicate which half of act_buf should be process
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_toggle_compute
+      if(~rst_n) begin
+         toggle_compute <= 0;
+         toggle_compute_d <= 0;         
+      end else begin
+         toggle_compute <= inst_en_d ? 0 : (trip_finish? ~toggle_compute : toggle_compute);
+         toggle_compute_d <= toggle_compute;
+      end
+   end
 
+   // PROCESS: act load
    // the act buffer acts in a half-half double-buffering manner
    reg [WID_N_TILE+WID_ACTADDR-2:0] n_act_in_trip;
    reg [WID_N_TILE+WID_ACTADDR-2:0] cnt_act_in_trip;
-   always_ff @(posedge clk or negedge rst_n) begin : proc_n_act_in_trip
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_n_act_in_trip
       if(~rst_n) begin
          n_act_in_trip <= 0;
       end else begin
@@ -198,43 +247,30 @@ module sblk_ctrl(/*AUTOARG*/
       end
    end
 
-   always_ff @(posedge clk or negedge rst_n) begin : proc_cnt_act_in_trip
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_cnt_act_in_trip
       if(~rst_n) begin
          cnt_act_in_trip <= 0;
       end else begin
-         cnt_act_in_trip <= (cnt_act_in_trip==n_act_in_trip)? 0 : (act_data_in_vld? cnt_act_in_trip + 1 : cnt_act_in_trip);
+         cnt_act_in_trip <= (cnt_act_in_trip==n_act_in_trip-1)? 0 : (act_in_vld? cnt_act_in_trip + 1 : cnt_act_in_trip);
       end
    end
 
-   // toggle for input act & compute. Status: 0: sblk free / one inst-trip unfinished; 1: one inst-trip finished
-   reg toggle_act_in;
-   reg toggle_act_in_d;
-   reg toggle_compute;
-   reg toggle_compute_d;
-
    // toggle of act input to indicate which half of act_buf should be written
-   always_ff @(posedge clk or negedge rst_n) begin : proc_toggle_act_in
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_toggle_act_in
       if(~rst_n) begin
          toggle_act_in <= 0;
+         toggle_act_in_d <= 0;
       end else begin
-         toggle_act_in <= inst_en_d? 0 : ((cnt_act_in_trip==n_act_in_trip)? ~toggle_act_in : toggle_act_in);
+         toggle_act_in <= inst_en_d? 0 : ((cnt_act_in_trip==n_act_in_trip-1)? ~toggle_act_in : toggle_act_in);
          toggle_act_in_d <= toggle_act_in;
       end
    end
 
-   // toggle of computation to indicate which half of act_buf should be process
-   always_ff @(posedge clk or negedge rst_n) begin : proc_toggle_compute
-      if(~rst_n) begin
-         toggle_compute <= 0;
-      end else begin
-         toggle_compute <= inst_en_d? 0 : ((cnt_tp==n_tp & cnt_tm==n_tm & cnt_tn==n_tn)? ~toggle_compute : toggle_compute);
-         toggle_compute_d <= toggle_compute;
-      end
-   end
 
+   // synchronization between process computation & process act load
    // status of act_buf, 1 bit for each half. 0: to be written; 1: to be computed
    reg [1:0] status_act_buf;
-   always_ff @(posedge clk or negedge rst_n) begin : proc_status_act_buf
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_status_act_buf
       if(~rst_n) begin
          status_act_buf <= 0;
       end else begin
@@ -243,41 +279,35 @@ module sblk_ctrl(/*AUTOARG*/
       end
    end
 
-   // act data request send permission: only one request signal is needed for one input act data batch
-   reg act_data_in_req_en;
-   always_ff @(posedge clk or negedge rst_n) begin : proc_act_data_in_req_en
+   // indicate the computation can be continued. criteria: any of status_act_buf is one.
+   assign comp_flag = (~toggle_compute & status_act_buf[0]) | (toggle_compute & status_act_buf[1]);
+
+   reg [WID_INST_LN+WID_INST_LP-1:0] cnt_act_in_batch;
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_cnt_act_in_batch
       if(~rst_n) begin
-         act_data_in_req_en <= 0;
+         cnt_act_in_batch <= 0;
       end else begin
-         act_data_in_req_en <= act_data_in_req? 0 : ((toggle_act_in ^ toggle_act_in_d)? 1 : act_data_in_req);
+         cnt_act_in_batch <= inst_en? 0 : ((toggle_act_in ^ toggle_act_in_d)? ((cnt_act_in_batch==(n_ln*n_lp-1))? cnt_act_in_batch : cnt_act_in_batch+1 ) : cnt_act_in_batch);
+      end
+   end
+
+   // act data request send permission: only one request signal is needed for one input act data batch
+   reg act_in_req_en;
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_act_in_req_en
+      if(~rst_n) begin
+         act_in_req_en <= 0;
+      end else begin
+         act_in_req_en <= inst_en_d? 1 : (act_in_req? 0 : (((toggle_act_in ^ toggle_act_in_d) & (cnt_act_in_batch<(n_ln*n_lp-1)))? 1 : act_in_req_en));
       end
    end
 
    // act request
-   reg act_data_in_req_d;
-   always_ff @(posedge clk or negedge rst_n) begin : proc_act_data_in_req
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_act_in_req
       if(~rst_n) begin
-         act_data_in_req <= 0;
-         act_data_in_req_d <= 0;
+         act_in_req <= 0;
       end else begin
-         // criteria: 1. any of status_act_buf is zero; 2. act_data_in_req_en is trigered; 3. ~act_data_in_req_d
-         act_data_in_req <= ~status_act_buf[0] | ~status_act_buf[1] &  act_data_in_req_en & ~act_data_in_req_d;
-      end
-   end
-
-   wire comp_flag; 
-   // indicate the computation can be continued. criteria: any of status_act_buf is one.
-   assign comp_flag = status_act_buf[0] | status_act_buf[1];
-
-   reg [WB_DELAY_CYCLE-1:0] comp_flag_d;
-   always_ff @(posedge clk or negedge rst_n) begin : proc_comp_flag_d
-      if(~rst_n) begin
-         comp_flag_d <= 0;
-      end else begin
-         comp_flag_d[0] <= comp_flag;
-         for (jj=1; jj<WB_DELAY_CYCLE; jj=jj+1) begin
-            comp_flag_d[ii] <= comp_flag_d[ii-1];
-         end
+         // criteria: 1. any of status_act_buf is zero; 2. act_in_req_en is trigered; 3. ~act_in_req
+         act_in_req <= (~status_act_buf[0] | ~status_act_buf[1]) &  act_in_req_en & ~act_in_req;
       end
    end
 
@@ -285,21 +315,26 @@ module sblk_ctrl(/*AUTOARG*/
    reg [WID_ACTADDR-2:0] cnt_act_in_tile_trip;
    reg [WID_N_TILE-1:0]  cnt_act_in_tile_idx; 
 
-   assign act_wr_addr_hbit <= {toggle_act_in, cnt_act_in_tile_trip};
-   always_ff @(posedge clk or negedge rst_n) begin : proc_act_wr_addr_hbit
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_cnt_act_in_tile_trip
       if(~rst_n) begin
-         act_wr_addr_hbit <= 0;
          cnt_act_in_tile_trip <= 0;
          cnt_act_in_tile_idx <= 0;
       end else begin
-         if (act_data_in_vld) begin
+         if (act_in_vld) begin
             cnt_act_in_tile_trip <= (cnt_act_in_tile_trip==(n_tn*n_tp-1))? 0 : cnt_act_in_tile_trip + 1;
             cnt_act_in_tile_idx <= (cnt_act_in_tile_trip==(n_tn*n_tp-1))? cnt_act_in_tile_idx + 1 : cnt_act_in_tile_idx;
          end
-         act_wr_en <= act_data_in_vld? (1 << cnt_act_in_tile_idx) : 0;
+         act_wr_en <= act_in_vld? (1 << cnt_act_in_tile_idx) : 0;
       end
-   end   
-end
+   end
+
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_act_wr_addr_hbit
+      if(~rst_n) begin
+         act_wr_addr_hbit <= 0;
+      end else begin
+         act_wr_addr_hbit <= {toggle_act_in, cnt_act_in_tile_trip};
+      end
+   end
 
 endmodule // sblk_ctrl
 

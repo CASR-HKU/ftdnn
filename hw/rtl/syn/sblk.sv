@@ -24,7 +24,7 @@ module sblk(/*AUTOARG*/
 
    // signals from controller, NOTE: may change for MV / CONV, etc. 
    // activation buffer wr signal
-   wire [WID_ACT-1:0] act_wr_data;
+   wire [2*WID_ACT-1:0] act_wr_data;
    wire [N_TILE-1:0]  act_wr_en;
    wire [WID_ACTADDR-2:0] act_wr_addr_hbit;
    // activation buffer rd signal
