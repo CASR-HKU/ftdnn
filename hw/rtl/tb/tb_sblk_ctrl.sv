@@ -52,10 +52,11 @@ module tb_sblk_ctrl;
    wire [WID_ACTADDR-2:0] act_wr_addr_hbit;
    wire [N_TILE-1:0]      act_wr_en;
 
-   wire [WID_PSUMADDR-1:0] psum_wr_addr;
-   wire [WID_PSUMADDR-1:0] psum_wr_en;
    wire [WID_PSUMADDR-1:0] psum_rd_addr;
+   wire [WID_PSUMADDR-1:0] psum_wr_addr;
+   wire psum_wr_en;
 
+   wire status_sblk;
 
    initial begin
       clk_l = 1'b1;
@@ -72,12 +73,20 @@ module tb_sblk_ctrl;
 
    // set instruction
    initial begin
-      n_tn = 2; n_tm = 4; n_tp = 1; n_ln = 3; n_lp = 2;
+      n_tp = 1; n_tm = 1; n_tn = 4; n_ln = 3; n_lp = 2;
       inst_data = {n_lp, n_ln, n_tp, n_tm, n_tn};
       inst_en = 0;
       repeat(10) @(negedge clk_l);
       inst_en = 1;
-      repeat(1) @(negedge clk_l);
+      @(negedge clk_l);
+      inst_en = 0;
+
+      @(negedge status_sblk);
+      n_tp = 3; n_tm = 2; n_tn = 2; n_ln = 2; n_lp = 2;
+      inst_data = {n_lp, n_ln, n_tp, n_tm, n_tn};
+      @(negedge clk_l);
+      inst_en = 1;
+      @(negedge clk_l);
       inst_en = 0;
    end
 
@@ -123,7 +132,8 @@ module tb_sblk_ctrl;
                   .act_wr_en(act_wr_en),
                   .psum_wr_addr(psum_wr_addr),
                   .psum_wr_en(psum_wr_en),
-                  .psum_rd_addr(psum_rd_addr)
+                  .psum_rd_addr(psum_rd_addr),
+                  .status_sblk(status_sblk)
                   );
 
 endmodule

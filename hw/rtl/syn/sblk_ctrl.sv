@@ -3,7 +3,7 @@
 module sblk_ctrl(/*AUTOARG*/
    // Outputs
    act_in_req, w_rd_addr, act_rd_addr_hbit, act_wr_addr_hbit,
-   act_wr_en, psum_wr_addr, psum_wr_en, psum_rd_addr,
+   act_wr_en, psum_wr_addr, psum_wr_en, psum_rd_addr, status_sblk,
    // Inputs
    clk_l, rst_n, inst_data, inst_en, act_in_vld, act_in
    );
@@ -52,9 +52,9 @@ module sblk_ctrl(/*AUTOARG*/
    output reg [N_TILE-1:0]      act_wr_en;
 
    output wire [WID_PSUMADDR-1:0] psum_wr_addr;
-   output wire [WID_PSUMADDR-1:0] psum_wr_en;
+   output wire psum_wr_en;
    output reg [WID_PSUMADDR-1:0]  psum_rd_addr;
-   // output wire status_sblk;
+   output reg status_sblk;
 
 
    reg [WID_INST-1:0]             inst_reg;
@@ -64,10 +64,10 @@ module sblk_ctrl(/*AUTOARG*/
          inst_reg <= 0;
          inst_en_d <= 0;
       end else begin
+         inst_en_d <= inst_en;
          if (inst_en) begin
             inst_reg <= inst_data;
          end
-         inst_en_d <= inst_en;
       end
    end
 
@@ -90,21 +90,6 @@ module sblk_ctrl(/*AUTOARG*/
    reg [WID_INST_LN-1:0]  cnt_ln;
    reg [WID_INST_LP-1:0]  cnt_lp;
 
-
-   wire comp_flag; 
-   reg [WB_DELAY_CYCLE-1:0] comp_flag_d;
-   always_ff @(posedge clk_l or negedge rst_n) begin : proc_comp_flag_d
-      if(~rst_n) begin
-         comp_flag_d <= 0;
-      end else begin
-         comp_flag_d[0] <= comp_flag;
-         for (ii=1; ii<WB_DELAY_CYCLE; ii=ii+1) begin
-            comp_flag_d[ii] <= comp_flag_d[ii-1];
-         end
-      end
-   end
-
-
    // toggle for input act & compute. Status: 0: sblk free / one inst-trip unfinished; 1: one inst-trip finished
    reg toggle_act_in;
    reg toggle_act_in_d;
@@ -113,7 +98,24 @@ module sblk_ctrl(/*AUTOARG*/
 
    wire trip_start;
    wire trip_finish;
-   wire inst_finish;   
+   wire inst_finish;
+
+   wire comp_flag; 
+   reg [WB_DELAY_CYCLE:0] comp_flag_d;
+   reg [WB_DELAY_CYCLE:0] inst_finish_d;   
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_comp_flag_d
+      if(~rst_n) begin
+         comp_flag_d <= 0;
+         inst_finish_d <= 0;
+      end else begin
+         comp_flag_d[0] <= comp_flag;
+         inst_finish_d[0] <= inst_finish;
+         for (ii=1; ii<WB_DELAY_CYCLE+1; ii=ii+1) begin
+            comp_flag_d[ii] <= comp_flag_d[ii-1];
+            inst_finish_d[ii] <= inst_finish_d[ii-1];
+         end
+      end
+   end
 
    // PROCESS: computation
    // counters for computation
@@ -130,7 +132,6 @@ module sblk_ctrl(/*AUTOARG*/
          cnt_tm <= 0;
       end else begin
          cnt_tm <= comp_flag? ((cnt_tp==n_tp-1)? ((cnt_tm==n_tm-1)? 0 : cnt_tm + 1) : cnt_tm) : 0;
-         // cnt_tm <= inst_en_d? 0 : (comp_flag? ((cnt_tp==n_tp-1)? ((cnt_tm==n_tm-1)? 0 : cnt_tm + 1) : cnt_tm) : cnt_tm);
       end
    end
 
@@ -139,7 +140,6 @@ module sblk_ctrl(/*AUTOARG*/
          cnt_tn <= 0;
       end else begin
          cnt_tn <= comp_flag? (((cnt_tp==n_tp-1) & (cnt_tm==n_tm-1))? ((cnt_tn==n_tn-1)? 0 : cnt_tn + 1) : cnt_tn) : 0;
-         // cnt_tn <= inst_en_d? 0 : (comp_flag? (((cnt_tp==n_tp-1) & (cnt_tm==n_tm-1))? ((cnt_tn==n_tn-1)? 0 : cnt_tn + 1) : cnt_tn) : cnt_tn);
       end
    end
 
@@ -147,7 +147,7 @@ module sblk_ctrl(/*AUTOARG*/
       if(~rst_n) begin
          cnt_ln <= 0;
       end else begin
-         cnt_ln <= inst_en_d? 0 : ((toggle_compute ^ toggle_compute_d)? ((cnt_ln==n_ln-1)? 0 : cnt_ln + 1) : cnt_ln);
+         cnt_ln <= inst_en_d? 0 : (trip_finish? ((cnt_ln==n_ln-1)? 0 : cnt_ln + 1) : cnt_ln);
       end
    end
 
@@ -155,34 +155,20 @@ module sblk_ctrl(/*AUTOARG*/
       if(~rst_n) begin
          cnt_lp <= 0;
       end else begin
-         cnt_lp <= inst_en_d? 0 : ((toggle_compute ^ toggle_compute_d)? ((cnt_ln==n_ln-1)? ((cnt_lp==n_lp-1)? 0 : cnt_lp+1) : cnt_lp) : cnt_lp);
+         cnt_lp <= inst_en_d? 0 : (trip_finish? ((cnt_ln==n_ln-1)? ((cnt_lp==n_lp-1)? 0 : cnt_lp+1) : cnt_lp) : cnt_lp);
       end
    end
 
    assign trip_finish = (cnt_tp==n_tp-1 & cnt_tm==n_tm-1 & cnt_tn==n_tn-1);
    assign trip_start = (cnt_tp==0 & cnt_tm==0 & cnt_tn==0);
-   assign inst_finish = (cnt_lp==n_lp & cnt_ln==n_ln & cnt_tp==0 & cnt_tm==0 & cnt_tn==0);   
-
-   // // set the flag to indicate computation has been finished
-   // reg flag_compute_stop;   
-   // always_ff @(posedge clk_l or negedge rst_n) begin : proc_flag_compute_stop
-   //    if(~rst_n) begin
-   //       flag_compute_stop <= 0;
-   //    end else begin
-   //       flag_compute_stop <= inst_en? 0 : ((cnt_tp==n_tp-1 & cnt_tm==n_tm-1 & cnt_tn==n_tn-1 & cnt_ln==n_ln-1 & cnt_lp==n_lp-1)? 1 : flag_compute_stop);
-   //    end
-   // end
-
-   // // status: 0: free, 1: busy
-   // assign status_sblk = flag_compute_stop;   
-
+   assign inst_finish = (cnt_lp==n_lp-1 & cnt_ln==n_ln-1 & trip_finish);
 
    // read address for computation generated with the counter values
    always_ff @(posedge clk_l or negedge rst_n) begin : proc_act_rd_addr_hbit
       if(~rst_n) begin
          act_rd_addr_hbit <= 0;
       end else begin
-         act_rd_addr_hbit <= (toggle_compute << (WID_ACTADDR-1)) + cnt_tp + cnt_tn * n_tp;
+         act_rd_addr_hbit <= (toggle_compute << (WID_ACTADDR-2)) + cnt_tp + cnt_tn * n_tp;
       end
    end
 
@@ -287,7 +273,7 @@ module sblk_ctrl(/*AUTOARG*/
       if(~rst_n) begin
          cnt_act_in_batch <= 0;
       end else begin
-         cnt_act_in_batch <= inst_en? 0 : ((toggle_act_in ^ toggle_act_in_d)? ((cnt_act_in_batch==(n_ln*n_lp-1))? cnt_act_in_batch : cnt_act_in_batch+1 ) : cnt_act_in_batch);
+         cnt_act_in_batch <= inst_en? 0 : ((toggle_act_in ^ toggle_act_in_d)? ((cnt_act_in_batch==(n_ln*n_lp-1))? 0 : cnt_act_in_batch+1 ) : cnt_act_in_batch);
       end
    end
 
@@ -312,7 +298,7 @@ module sblk_ctrl(/*AUTOARG*/
    end
 
    // act buf wr address
-   reg [WID_ACTADDR-2:0] cnt_act_in_tile_trip;
+   reg [WID_ACTADDR-3:0] cnt_act_in_tile_trip;
    reg [WID_N_TILE-1:0]  cnt_act_in_tile_idx; 
 
    always_ff @(posedge clk_l or negedge rst_n) begin : proc_cnt_act_in_tile_trip
@@ -335,6 +321,15 @@ module sblk_ctrl(/*AUTOARG*/
          act_wr_addr_hbit <= {toggle_act_in, cnt_act_in_tile_trip};
       end
    end
+
+   // status_sblk: 0: free, 1: busy
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_status_sblk
+      if(~rst_n) begin
+         status_sblk <= 0;
+      end else begin
+         status_sblk <= inst_en_d? 1 : ((inst_finish_d[WB_DELAY_CYCLE] & ~comp_flag_d[WB_DELAY_CYCLE-1])? 0 : status_sblk);
+      end
+   end   
 
 endmodule // sblk_ctrl
 
