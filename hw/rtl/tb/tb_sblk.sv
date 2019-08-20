@@ -1,7 +1,9 @@
 // unit test for sblk control
-module tb_sblk_ctrl;
+`timescale 1ns / 1ns
 
-   parameter CLK_PERIOD = 10;
+module tb_sblk;
+
+   parameter CLK_PERIOD = 20;
 
    parameter N_TILE = 4;
    parameter WID_N_TILE = $clog2(N_TILE);
@@ -26,12 +28,17 @@ module tb_sblk_ctrl;
    // variables
    int ii, jj;
 
-   reg clk_l;
+   reg clk_l, clk_h;
    reg rst_n;
 
    // instruction input signal
    reg [WID_INST-1:0] inst_data;
    reg                inst_en;
+
+   reg                act_data_in_vld;
+   reg [2*WID_ACT-1:0] act_data_in;
+
+
    // instruction partition
    reg [WID_INST_TN-1:0] n_tn;
    reg [WID_INST_TM-1:0] n_tm;
@@ -39,21 +46,9 @@ module tb_sblk_ctrl;
    reg [WID_INST_LN-1:0] n_ln;
    reg [WID_INST_LP-1:0] n_lp;
 
-   reg                   act_data_in_vld;
-   reg [2*WID_ACT-1:0]   act_data_in;
-
    // output wires of the module
    wire                  act_data_in_req;
-   wire [WID_WADDR-1:0]  w_rd_addr;
-   wire [WID_ACTADDR-2:0] act_rd_addr_hbit;
-   wire [WID_ACTADDR-2:0] act_wr_addr_hbit;
-   wire [N_TILE-1:0]      act_wr_en;
-
-   wire [WID_PSUMADDR-1:0] psum_rd_addr;
-   wire [WID_PSUMADDR-1:0] psum_wr_addr;
-   wire                    psum_wr_en;
-
-   wire                    status_sblk;
+   wire                  status_sblk;
 
    initial begin
       clk_l = 1'b1;
@@ -61,19 +56,24 @@ module tb_sblk_ctrl;
    end
 
    initial begin
+      clk_h = 1'b1;
+      forever #(CLK_PERIOD/4) clk_h = ~clk_h;
+   end
+
+   initial begin
       rst_n = 1'b1;
       repeat(2) @(negedge clk_l);
       rst_n = 1'b0;
-      repeat(2) @(negedge clk_l);
+      repeat(20) @(negedge clk_l);
       rst_n = 1'b1;
    end
 
    // set instruction
    initial begin
-      n_tp = 1; n_tm = 1; n_tn = 4; n_ln = 3; n_lp = 2;
+      n_tp = 2; n_tm = 6; n_tn = 2; n_ln = 2; n_lp = 2;
       inst_data = {n_lp, n_ln, n_tp, n_tm, n_tn};
       inst_en = 0;
-      repeat(10) @(negedge clk_l);
+      repeat(40) @(negedge clk_l);
       inst_en = 1;
       @(negedge clk_l);
       inst_en = 0;
@@ -102,33 +102,25 @@ module tb_sblk_ctrl;
          end else begin
             @(negedge clk_l);
             act_data_in_vld = 0;
+            act_data_in <= 0;
          end
       end
    end
 
    initial begin
-      repeat(20000) @(posedge clk_l);
+      repeat(5000) @(posedge clk_l);
       $finish;
    end
 
-   sblk_ctrl #(
-               .N_TILE(N_TILE),
-               .WID_N_TILE(WID_N_TILE)
-               )
-   u_sblk_ctrl(
+   sblk u_sblk(
                .clk_l(clk_l),
+               .clk_h(clk_h),
                .rst_n(rst_n),
                .inst_data(inst_data),
                .inst_en(inst_en),
-               .act_in_vld(act_data_in_vld),
-               .act_in_req(act_data_in_req),
-               .w_rd_addr(w_rd_addr),
-               .act_rd_addr_hbit(act_rd_addr_hbit),
-               .act_wr_addr_hbit(act_wr_addr_hbit),
-               .act_wr_en(act_wr_en),
-               .psum_wr_addr(psum_wr_addr),
-               .psum_wr_en(psum_wr_en),
-               .psum_rd_addr(psum_rd_addr),
+               .act_data_in_vld(act_data_in_vld),
+               .act_data_in(act_data_in),
+               .act_data_in_req(act_data_in_req),
                .status_sblk(status_sblk)
                );
 

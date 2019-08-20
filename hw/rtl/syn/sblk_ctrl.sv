@@ -1,22 +1,16 @@
-`timescale 1 ns / 1 ns
-
 module sblk_ctrl(/*AUTOARG*/
    // Outputs
    act_in_req, w_rd_addr, act_rd_addr_hbit, act_wr_addr_hbit,
    act_wr_en, psum_wr_addr, psum_wr_en, psum_rd_addr, status_sblk,
    // Inputs
-   clk_l, rst_n, inst_data, inst_en, act_in_vld, act_in
+   clk_l, rst_n, inst_data, inst_en, act_in_vld
    );
 
    parameter N_TILE = 4;
    parameter WID_N_TILE = $clog2(N_TILE);
-   parameter WID_W = 16;
    parameter WID_WADDR = 10;
-   parameter WID_ACT = 16;
    parameter WID_ACTADDR = 6;
-   parameter WID_PSUM = 36;
    parameter WID_PSUMADDR = 9;
-   parameter PSUM_SPLIT_START_POS = 12;
 
    parameter WID_INST_TN=4;
    parameter WID_INST_TM=9;
@@ -26,7 +20,6 @@ module sblk_ctrl(/*AUTOARG*/
    parameter WID_INST_LP=5;
 
    parameter WID_INST = WID_INST_TN + WID_INST_TM + WID_INST_TP + WID_INST_LN + WID_INST_LP;
-
    //FIXME: delay length between psum read and psum write back, calculated with N_TILE
    parameter WB_DELAY_CYCLE = N_TILE + 8; 
 
@@ -42,7 +35,7 @@ module sblk_ctrl(/*AUTOARG*/
    // request signal, one-cycle trigger for the batch act of al N_TILE stiles in one trip count
    output reg                act_in_req;
    input wire                act_in_vld;
-   input wire [2*WID_ACT-1:0] act_in;
+   // input wire [2*WID_ACT-1:0] act_in;
 
 
    output reg [WID_WADDR-1:0] w_rd_addr;

@@ -17,6 +17,7 @@ module stile(/*AUTOARG*/
    parameter WID_ACTADDR = 6;
    // OPMODE for DSP
    parameter OPMODE = 7'b0010101;  // 7'b0110101 for the start DSP
+   parameter [256-1:0] BRAM_INIT_VAL[64-1:0] = '{64{256'h0001000100010001000100010001000100010001000100010001000100010001}};
 
    input wire clk_h;
    input wire clk_l;
@@ -32,7 +33,7 @@ module stile(/*AUTOARG*/
    input wire [WID_WADDR-1:0] w_rd_addr;
 
    // to DisRAM, act buffer wr signal
-   input wire [WID_ACT-1:0]   act_wr_data;
+   input wire [2*WID_ACT-1:0]   act_wr_data;
    input wire [WID_ACTADDR-2:0] act_wr_addr_hbit;
    input wire                   act_wr_en;
 
@@ -57,7 +58,10 @@ module stile(/*AUTOARG*/
          act_rd_addr_lbit <= ~act_rd_addr_lbit;
          act_wr_addr_lbit <= ~act_wr_addr_lbit;
       end
-   end   
+   end
+
+   wire [WID_ACT-1:0] act_wr_data_clkh;
+   assign act_wr_data_clkh = act_wr_addr_lbit? act_wr_data[WID_ACT+:WID_ACT] : act_wr_data[0+:WID_ACT];
    
 
    // DSP primitive configuration (Note: this is the primitive for UltraScale: DSP48E2)
@@ -144,35 +148,37 @@ module stile(/*AUTOARG*/
                  // Data inputs: Data Ports
                  .A(w_rd_data),                           // 30-bit input: A data
                  .B(act_rd_data),                           // 18-bit input: B data
-                 .C(p_sum_in)                           // 48-bit input: C data
+                 .C(p_sumin),                           // 48-bit input: C data
                  // .CARRYIN(CARRYIN),               // 1-bit input: Carry-in
                  // .D(D),                           // 27-bit input: D data
                  // Reset/Clock Enable inputs: Reset/Clock Enable Inputs
-                 // .CEA1(CEA1),                     // 1-bit input: Clock enable for 1st stage AREG
-                 // .CEA2(CEA2),                     // 1-bit input: Clock enable for 2nd stage AREG
-                 // .CEAD(CEAD),                     // 1-bit input: Clock enable for ADREG
-                 // .CEALUMODE(CEALUMODE),           // 1-bit input: Clock enable for ALUMODE
-                 // .CEB1(CEB1),                     // 1-bit input: Clock enable for 1st stage BREG
-                 // .CEB2(CEB2),                     // 1-bit input: Clock enable for 2nd stage BREG
-                 // .CEC(CEC),                       // 1-bit input: Clock enable for CREG
-                 // .CECARRYIN(CECARRYIN),           // 1-bit input: Clock enable for CARRYINREG
-                 // .CECTRL(CECTRL),                 // 1-bit input: Clock enable for OPMODEREG and CARRYINSELREG
-                 // .CED(CED),                       // 1-bit input: Clock enable for DREG
-                 // .CEINMODE(CEINMODE),             // 1-bit input: Clock enable for INMODEREG
-                 // .CEM(CEM),                       // 1-bit input: Clock enable for MREG
-                 // .CEP(CEP),                       // 1-bit input: Clock enable for PREG
-                 // .RSTA(RSTA),                     // 1-bit input: Reset for AREG
-                 // .RSTALLCARRYIN(RSTALLCARRYIN),   // 1-bit input: Reset for CARRYINREG
-                 // .RSTALUMODE(RSTALUMODE),         // 1-bit input: Reset for ALUMODEREG
-                 // .RSTB(RSTB),                     // 1-bit input: Reset for BREG
-                 // .RSTC(RSTC),                     // 1-bit input: Reset for CREG
-                 // .RSTCTRL(RSTCTRL),               // 1-bit input: Reset for OPMODEREG and CARRYINSELREG
-                 // .RSTD(RSTD),                     // 1-bit input: Reset for DREG and ADREG
-                 // .RSTINMODE(RSTINMODE),           // 1-bit input: Reset for INMODEREG
-                 // .RSTM(RSTM),                     // 1-bit input: Reset for MREG
-                 // .RSTP(RSTP)                      // 1-bit input: Reset for PREG
+                 .CEA1(1'b1),                     // 1-bit input: Clock enable for 1st stage AREG
+                 .CEA2(1'b1),                     // 1-bit input: Clock enable for 2nd stage AREG
+                 .CEAD(1'b1),                     // 1-bit input: Clock enable for ADREG
+                 .CEALUMODE(1'b1),           // 1-bit input: Clock enable for ALUMODE
+                 .CEB1(1'b1),                     // 1-bit input: Clock enable for 1st stage BREG
+                 .CEB2(1'b1),                     // 1-bit input: Clock enable for 2nd stage BREG
+                 .CEC(1'b1),                       // 1-bit input: Clock enable for CREG
+                 .CECARRYIN(1'b1),           // 1-bit input: Clock enable for CARRYINREG
+                 .CECTRL(1'b1),                 // 1-bit input: Clock enable for OPMODEREG and CARRYINSELREG
+                 .CED(1'b1),                       // 1-bit input: Clock enable for DREG
+                 .CEINMODE(1'b1),             // 1-bit input: Clock enable for INMODEREG
+                 .CEM(1'b1),                       // 1-bit input: Clock enable for MREG
+                 .CEP(1'b1),                       // 1-bit input: Clock enable for PREG
+                 .RSTA(~rst_n),                     // 1-bit input: Reset for AREG
+                 .RSTALLCARRYIN(~rst_n),   // 1-bit input: Reset for CARRYINREG
+                 .RSTALUMODE(~rst_n),         // 1-bit input: Reset for ALUMODEREG
+                 .RSTB(~rst_n),                     // 1-bit input: Reset for BREG
+                 .RSTC(~rst_n),                     // 1-bit input: Reset for CREG
+                 .RSTCTRL(~rst_n),               // 1-bit input: Reset for OPMODEREG and CARRYINSELREG
+                 .RSTD(~rst_n),                     // 1-bit input: Reset for DREG and ADREG
+                 .RSTINMODE(~rst_n),           // 1-bit input: Reset for INMODEREG
+                 .RSTM(~rst_n),                     // 1-bit input: Reset for MREG
+                 .RSTP(~rst_n)                      // 1-bit input: Reset for PREG
                  );
    // End of DSP48E2_inst instantiation
+
+
 
 
    genvar                       ii;
@@ -191,7 +197,7 @@ module stile(/*AUTOARG*/
                         .A3(act_wr_addr_hbit[2]),       // Rw/ address[3] input bit
                         .A4(act_wr_addr_hbit[3]),       // Rw/ address[4] input bit
                         .A5(act_wr_addr_hbit[4]),       // Rw/ address[5] input bit
-                        .D(act_wr_data[ii]),         // Write 1-bit data input
+                        .D(act_wr_data_clkh[ii]),         // Write 1-bit data input
                         .DPRA0(act_rd_addr_lbit), // Read-only address[0] input bit
                         .DPRA1(act_rd_addr_hbit[0]), // Read-only address[1] input bit
                         .DPRA2(act_rd_addr_hbit[1]), // Read-only address[2] input bit
@@ -207,106 +213,172 @@ module stile(/*AUTOARG*/
 
    // BRAM for weight buffer
    RAMB18E2 #(
-              // CASCADE_ORDER_A, CASCADE_ORDER_B: "FIRST", "MIDDLE", "LAST", "NONE" 
-              .CASCADE_ORDER_A("NONE"),
-              .CASCADE_ORDER_B("NONE"),
-              // CLOCK_DOMAINS: "COMMON", "INDEPENDENT" 
-              .CLOCK_DOMAINS("INDEPENDENT"),
-              // Collision check: "ALL", "GENERATE_X_ONLY", "NONE", "WARNING_ONLY" 
-              .SIM_COLLISION_CHECK("ALL"),
-              // DOA_REG, DOB_REG: Optional output register (0, 1)
-              .DOA_REG(1),
-              .DOB_REG(0),
-              // ENADDRENA/ENADDRENB: Address enable pin enable, "TRUE", "FALSE" 
-              .ENADDRENA("FALSE"),
-              .ENADDRENB("FALSE"),
-              // INIT_A, INIT_B: Initial values on output ports
-              .INIT_A(18'h00000),
-              .INIT_B(18'h00000),
-              //TODO: Initialization File: RAM initialization file
-              .INIT_FILE("NONE"),
-              // Programmable Inversion Attributes: Specifies the use of the built-in programmable inversion
-              .IS_CLKARDCLK_INVERTED(1'b0),
-              .IS_CLKBWRCLK_INVERTED(1'b0),
-              .IS_ENARDEN_INVERTED(1'b0),
-              .IS_ENBWREN_INVERTED(1'b0),
-              .IS_RSTRAMARSTRAM_INVERTED(1'b0),
-              .IS_RSTRAMB_INVERTED(1'b0),
-              .IS_RSTREGARSTREG_INVERTED(1'b0),
-              .IS_RSTREGB_INVERTED(1'b0),
-              // RDADDRCHANGE: Disable memory access when output value does not change ("TRUE", "FALSE")
-              .RDADDRCHANGEA("FALSE"),
-              .RDADDRCHANGEB("FALSE"),
-              // READ_WIDTH_A/B, WRITE_WIDTH_A/B: Read/write width per port
-              .READ_WIDTH_A(2),                                                                 // 0-9
-              .READ_WIDTH_B(0),                                                                 // 0-9
-              .WRITE_WIDTH_A(0),                                                                // 0-9
-              .WRITE_WIDTH_B(2),                                                                // 0-9
-              // RSTREG_PRIORITY_A, RSTREG_PRIORITY_B: Reset or enable priority ("RSTREG", "REGCE")
-              .RSTREG_PRIORITY_A("RSTREG"),
-              .RSTREG_PRIORITY_B("RSTREG"),
-              // SRVAL_A, SRVAL_B: Set/reset value for output
-              .SRVAL_A(18'h00000),
-              .SRVAL_B(18'h00000),
-              // Sleep Async: Sleep function asynchronous or synchronous ("TRUE", "FALSE")
-              .SLEEP_ASYNC("FALSE"),
-              // WriteMode: "WRITE_FIRST", "NO_CHANGE", "READ_FIRST" 
-              .WRITE_MODE_A("NO_CHANGE"),
-              .WRITE_MODE_B("NO_CHANGE") 
-              )
+      // CASCADE_ORDER_A, CASCADE_ORDER_B: "FIRST", "MIDDLE", "LAST", "NONE" 
+      .CASCADE_ORDER_A("NONE"),
+      .CASCADE_ORDER_B("NONE"),
+      // CLOCK_DOMAINS: "COMMON", "INDEPENDENT" 
+      .CLOCK_DOMAINS("INDEPENDENT"),
+      // Collision check: "ALL", "GENERATE_X_ONLY", "NONE", "WARNING_ONLY" 
+      .SIM_COLLISION_CHECK("ALL"),
+      // DOA_REG, DOB_REG: Optional output register (0, 1)
+      .DOA_REG(1),
+      // .DOB_REG(1),
+      // ENADDRENA/ENADDRENB: Address enable pin enable, "TRUE", "FALSE" 
+      .ENADDRENA("FALSE"),
+      .ENADDRENB("FALSE"),
+      // INITP_00 to INITP_07: Initial contents of parity memory array -- omitted
+      // INIT_00 to INIT_3F: Initial contents of data memory array
+      .INIT_00(BRAM_INIT_VAL[0]),
+      .INIT_01(BRAM_INIT_VAL[1]),
+      .INIT_02(BRAM_INIT_VAL[2]),
+      .INIT_03(BRAM_INIT_VAL[3]),
+      .INIT_04(BRAM_INIT_VAL[4]),
+      .INIT_05(BRAM_INIT_VAL[5]),
+      .INIT_06(BRAM_INIT_VAL[6]),
+      .INIT_07(BRAM_INIT_VAL[7]),
+      .INIT_08(BRAM_INIT_VAL[8]),
+      .INIT_09(BRAM_INIT_VAL[9]),
+      .INIT_0A(BRAM_INIT_VAL[10]),
+      .INIT_0B(BRAM_INIT_VAL[11]),
+      .INIT_0C(BRAM_INIT_VAL[12]),
+      .INIT_0D(BRAM_INIT_VAL[13]),
+      .INIT_0E(BRAM_INIT_VAL[14]),
+      .INIT_0F(BRAM_INIT_VAL[15]),
+      .INIT_10(BRAM_INIT_VAL[16]),
+      .INIT_11(BRAM_INIT_VAL[17]),
+      .INIT_12(BRAM_INIT_VAL[18]),
+      .INIT_13(BRAM_INIT_VAL[19]),
+      .INIT_14(BRAM_INIT_VAL[20]),
+      .INIT_15(BRAM_INIT_VAL[21]),
+      .INIT_16(BRAM_INIT_VAL[22]),
+      .INIT_17(BRAM_INIT_VAL[23]),
+      .INIT_18(BRAM_INIT_VAL[24]),
+      .INIT_19(BRAM_INIT_VAL[25]),
+      .INIT_1A(BRAM_INIT_VAL[26]),
+      .INIT_1B(BRAM_INIT_VAL[27]),
+      .INIT_1C(BRAM_INIT_VAL[28]),
+      .INIT_1D(BRAM_INIT_VAL[29]),
+      .INIT_1E(BRAM_INIT_VAL[30]),
+      .INIT_1F(BRAM_INIT_VAL[31]),
+      .INIT_20(BRAM_INIT_VAL[32]),
+      .INIT_21(BRAM_INIT_VAL[33]),
+      .INIT_22(BRAM_INIT_VAL[34]),
+      .INIT_23(BRAM_INIT_VAL[35]),
+      .INIT_24(BRAM_INIT_VAL[36]),
+      .INIT_25(BRAM_INIT_VAL[37]),
+      .INIT_26(BRAM_INIT_VAL[38]),
+      .INIT_27(BRAM_INIT_VAL[39]),
+      .INIT_28(BRAM_INIT_VAL[40]),
+      .INIT_29(BRAM_INIT_VAL[41]),
+      .INIT_2A(BRAM_INIT_VAL[42]),
+      .INIT_2B(BRAM_INIT_VAL[43]),
+      .INIT_2C(BRAM_INIT_VAL[44]),
+      .INIT_2D(BRAM_INIT_VAL[45]),
+      .INIT_2E(BRAM_INIT_VAL[46]),
+      .INIT_2F(BRAM_INIT_VAL[47]),
+      .INIT_30(BRAM_INIT_VAL[48]),
+      .INIT_31(BRAM_INIT_VAL[49]),
+      .INIT_32(BRAM_INIT_VAL[50]),
+      .INIT_33(BRAM_INIT_VAL[51]),
+      .INIT_34(BRAM_INIT_VAL[52]),
+      .INIT_35(BRAM_INIT_VAL[53]),
+      .INIT_36(BRAM_INIT_VAL[54]),
+      .INIT_37(BRAM_INIT_VAL[55]),
+      .INIT_38(BRAM_INIT_VAL[56]),
+      .INIT_39(BRAM_INIT_VAL[57]),
+      .INIT_3A(BRAM_INIT_VAL[58]),
+      .INIT_3B(BRAM_INIT_VAL[59]),
+      .INIT_3C(BRAM_INIT_VAL[60]),
+      .INIT_3D(BRAM_INIT_VAL[61]),
+      .INIT_3E(BRAM_INIT_VAL[62]),
+      .INIT_3F(BRAM_INIT_VAL[63]),
+      // INIT_A, INIT_B: Initial values on output ports
+      .INIT_A(18'h00000),
+      .INIT_B(18'h00000),
+      // Initialization File: RAM initialization file
+      .INIT_FILE("NONE"),
+      // Programmable Inversion Attributes: Specifies the use of the built-in programmable inversion
+      .IS_CLKARDCLK_INVERTED(1'b0),
+      .IS_CLKBWRCLK_INVERTED(1'b0),
+      .IS_ENARDEN_INVERTED(1'b0),
+      .IS_ENBWREN_INVERTED(1'b0),
+      .IS_RSTRAMARSTRAM_INVERTED(1'b0),
+      .IS_RSTRAMB_INVERTED(1'b0),
+      .IS_RSTREGARSTREG_INVERTED(1'b0),
+      .IS_RSTREGB_INVERTED(1'b0),
+      // RDADDRCHANGE: Disable memory access when output value does not change ("TRUE", "FALSE")
+      .RDADDRCHANGEA("FALSE"),
+      .RDADDRCHANGEB("FALSE"),
+      // READ_WIDTH_A/B, WRITE_WIDTH_A/B: Read/write width per port
+      .READ_WIDTH_A(18),                                                                 // 0-9
+      .READ_WIDTH_B(0),                                                                 // 0-9
+      .WRITE_WIDTH_A(0),                                                                // 0-9
+      .WRITE_WIDTH_B(0),                                                                // 0-9
+      // RSTREG_PRIORITY_A, RSTREG_PRIORITY_B: Reset or enable priority ("RSTREG", "REGCE")
+      .RSTREG_PRIORITY_A("RSTREG"),
+      .RSTREG_PRIORITY_B("RSTREG"),
+      // SRVAL_A, SRVAL_B: Set/reset value for output
+      .SRVAL_A(18'h00000),
+      .SRVAL_B(18'h00000),
+      // Sleep Async: Sleep function asynchronous or synchronous ("TRUE", "FALSE")
+      .SLEEP_ASYNC("FALSE"),
+      // WriteMode: "WRITE_FIRST", "NO_CHANGE", "READ_FIRST" 
+      .WRITE_MODE_A("READ_FIRST"),
+      .WRITE_MODE_B("READ_FIRST") 
+   )
    RAMB18E2_inst (
-                  // Cascade Signals outputs: Multi-BRAM cascade signals
-                  // .CASDOUTA(CASDOUTA),               // 16-bit output: Port A cascade output data
-                  // .CASDOUTB(CASDOUTB),               // 16-bit output: Port B cascade output data
-                  // .CASDOUTPA(CASDOUTPA),             // 2-bit output: Port A cascade output parity data
-                  // .CASDOUTPB(CASDOUTPB),             // 2-bit output: Port B cascade output parity data
-                  // Port A Data outputs: Port A data
-                  .DOUTADOUT(w_rd_data),             // 16-bit output: Port A data/LSB data
-                  // .DOUTPADOUTP(DOUTPADOUTP),         // 2-bit output: Port A parity/LSB parity
-                  // Port B Data outputs: Port B data
-                  // .DOUTBDOUT(DOUTBDOUT),             // 16-bit output: Port B data/MSB data
-                  // .DOUTPBDOUTP(DOUTPBDOUTP),         // 2-bit output: Port B parity/MSB parity
-                  // Cascade Signals inputs: Multi-BRAM cascade signals
-                  // .CASDIMUXA(CASDIMUXA),             // 1-bit input: Port A input data (0=DINA, 1=CASDINA)
-                  // .CASDIMUXB(CASDIMUXB),             // 1-bit input: Port B input data (0=DINB, 1=CASDINB)
-                  // .CASDINA(CASDINA),                 // 16-bit input: Port A cascade input data
-                  // .CASDINB(CASDINB),                 // 16-bit input: Port B cascade input data
-                  // .CASDINPA(CASDINPA),               // 2-bit input: Port A cascade input parity data
-                  // .CASDINPB(CASDINPB),               // 2-bit input: Port B cascade input parity data
-                  // .CASDOMUXA(CASDOMUXA),             // 1-bit input: Port A unregistered data (0=BRAM data, 1=CASDINA)
-                  // .CASDOMUXB(CASDOMUXB),             // 1-bit input: Port B unregistered data (0=BRAM data, 1=CASDINB)
-                  // .CASDOMUXEN_A(CASDOMUXEN_A),       // 1-bit input: Port A unregistered output data enable
-                  // .CASDOMUXEN_B(CASDOMUXEN_B),       // 1-bit input: Port B unregistered output data enable
-                  // .CASOREGIMUXA(CASOREGIMUXA),       // 1-bit input: Port A registered data (0=BRAM data, 1=CASDINA)
-                  // .CASOREGIMUXB(CASOREGIMUXB),       // 1-bit input: Port B registered data (0=BRAM data, 1=CASDINB)
-                  // .CASOREGIMUXEN_A(CASOREGIMUXEN_A), // 1-bit input: Port A registered output data enable
-                  // .CASOREGIMUXEN_B(CASOREGIMUXEN_B), // 1-bit input: Port B registered output data enable
-                  // Port A Address/Control Signals inputs: Port A address and control signals
-                  .ADDRARDADDR(w_rd_addr),         // 14-bit input: A/Read port address
-                  .ADDRENA(1'b1),                 // 1-bit input: Active-High A/Read port address enable
-                  .CLKARDCLK(clk_l),             // 1-bit input: A/Read port clock
-                  .ENARDEN(1'b1),                 // 1-bit input: Port A enable/Read enable
-                  .REGCEAREGCE(1'b1),         // 1-bit input: Port A register enable/Register enable
-                  // .RSTRAMARSTRAM(RSTRAMARSTRAM),     // 1-bit input: Port A set/reset
-                  // .RSTREGARSTREG(RSTREGARSTREG),     // 1-bit input: Port A register set/reset
-                  // .WEA(WEA),                         // 2-bit input: Port A write enable
-                  // Port A Data inputs: Port A data
-                  // .DINADIN(DINADIN),                 // 16-bit input: Port A data/LSB data
-                  // .DINPADINP(DINPADINP),             // 2-bit input: Port A parity/LSB parity
-                  // Port B Address/Control Signals inputs: Port B address and control signals
-                  .ADDRBWRADDR(w_wr_addr),         // 14-bit input: B/Write port address
-                  .ADDRENB(1'b1),                 // 1-bit input: Active-High B/Write port address enable
-                  .CLKBWRCLK(clk_l),             // 1-bit input: B/Write port clock
-                  .ENBWREN(1'b1),                 // 1-bit input: Port B enable/Write enable
-                  // .REGCEB(REGCEB),                   // 1-bit input: Port B register enable
-                  // .RSTRAMB(RSTRAMB),                 // 1-bit input: Port B set/reset
-                  // .RSTREGB(RSTREGB),                 // 1-bit input: Port B register set/reset
-                  // .SLEEP(SLEEP),                     // 1-bit input: Sleep Mode
-                  .WEBWE(w_wr_en),                     // 4-bit input: Port B write enable/Write enable
-                  // Port B Data inputs: Port B data
-                  .DINBDIN(w_wr_data)                 // 16-bit input: Port B data/MSB data
-                  // .DINPBDINP(DINPBDINP)              // 2-bit input: Port B parity/MSB parity
-                  );
+      // Cascade Signals outputs: Multi-BRAM cascade signals
+      // .CASDOUTA(CASDOUTA),               // 16-bit output: Port A cascade output data
+      // .CASDOUTB(CASDOUTB),               // 16-bit output: Port B cascade output data
+      // .CASDOUTPA(CASDOUTPA),             // 2-bit output: Port A cascade output parity data
+      // .CASDOUTPB(CASDOUTPB),             // 2-bit output: Port B cascade output parity data
+      // Port A Data outputs: Port A data
+      .DOUTADOUT(w_rd_data),             // 16-bit output: Port A data/LSB data
+      // .DOUTPADOUTP(DOUTPADOUTP),         // 2-bit output: Port A parity/LSB parity
+      // Port B Data outputs: Port B data
+      // .DOUTBDOUT(DOUTBDOUT),             // 16-bit output: Port B data/MSB data
+      // .DOUTPBDOUTP(DOUTPBDOUTP),         // 2-bit output: Port B parity/MSB parity
+      // Cascade Signals inputs: Multi-BRAM cascade signals
+      // .CASDIMUXA(CASDIMUXA),             // 1-bit input: Port A input data (0=DINA, 1=CASDINA)
+      // .CASDIMUXB(CASDIMUXB),             // 1-bit input: Port B input data (0=DINB, 1=CASDINB)
+      // .CASDINA(CASDINA),                 // 16-bit input: Port A cascade input data
+      // .CASDINB(CASDINB),                 // 16-bit input: Port B cascade input data
+      // .CASDINPA(CASDINPA),               // 2-bit input: Port A cascade input parity data
+      // .CASDINPB(CASDINPB),               // 2-bit input: Port B cascade input parity data
+      // .CASDOMUXA(CASDOMUXA),             // 1-bit input: Port A unregistered data (0=BRAM data, 1=CASDINA)
+      // .CASDOMUXB(CASDOMUXB),             // 1-bit input: Port B unregistered data (0=BRAM data, 1=CASDINB)
+      // .CASDOMUXEN_A(CASDOMUXEN_A),       // 1-bit input: Port A unregistered output data enable
+      // .CASDOMUXEN_B(CASDOMUXEN_B),       // 1-bit input: Port B unregistered output data enable
+      // .CASOREGIMUXA(CASOREGIMUXA),       // 1-bit input: Port A registered data (0=BRAM data, 1=CASDINA)
+      // .CASOREGIMUXB(CASOREGIMUXB),       // 1-bit input: Port B registered data (0=BRAM data, 1=CASDINB)
+      // .CASOREGIMUXEN_A(CASOREGIMUXEN_A), // 1-bit input: Port A registered output data enable
+      // .CASOREGIMUXEN_B(CASOREGIMUXEN_B), // 1-bit input: Port B registered output data enable
+      // Port A Address/Control Signals inputs: Port A address and control signals
+      .ADDRARDADDR({w_rd_addr, 4'b0000}),         // 14-bit input: A/Read port address
+      .ADDRENA(1'b1),                 // 1-bit input: Active-High A/Read port address enable
+      .CLKARDCLK(clk_l),             // 1-bit input: A/Read port clock
+      .ENARDEN(1'b1),                 // 1-bit input: Port A enable/Read enable
+      .REGCEAREGCE(1'b1),         // 1-bit input: Port A register enable/Register enable
+      .RSTRAMARSTRAM(~rst_n),     // 1-bit input: Port A set/reset
+      .RSTREGARSTREG(~rst_n),     // 1-bit input: Port A register set/reset
+      .WEA(2'b00)                         // 2-bit input: Port A write enable
+      // Port A Data inputs: Port A data
+      // .DINADIN(DINADIN),                 // 16-bit input: Port A data/LSB data
+      // .DINPADINP(DINPADINP),             // 2-bit input: Port A parity/LSB parity
+      // Port B Address/Control Signals inputs: Port B address and control signals
+      // .ADDRBWRADDR(ADDRBWRADDR),         // 14-bit input: B/Write port address
+      // .ADDRENB(ADDRENB),                 // 1-bit input: Active-High B/Write port address enable
+      // .CLKBWRCLK(CLKBWRCLK),             // 1-bit input: B/Write port clock
+      // .ENBWREN(ENBWREN),                 // 1-bit input: Port B enable/Write enable
+      // .REGCEB(REGCEB),                   // 1-bit input: Port B register enable
+      // .RSTRAMB(RSTRAMB),                 // 1-bit input: Port B set/reset
+      // .RSTREGB(RSTREGB),                 // 1-bit input: Port B register set/reset
+      // .SLEEP(SLEEP),                     // 1-bit input: Sleep Mode
+      // .WEBWE(WEBWE),                     // 4-bit input: Port B write enable/Write enable
+      // Port B Data inputs: Port B data
+      // .DINBDIN(DINBDIN),                 // 16-bit input: Port B data/MSB data
+      // .DINPBDINP(DINPBDINP)              // 2-bit input: Port B parity/MSB parity
+   );
    // End of RAMB18E2_inst instantiation
 
 endmodule
