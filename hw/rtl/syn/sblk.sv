@@ -1,4 +1,5 @@
 // SuperBlock
+`timescale 1ns / 1ns
 
 module sblk(/*AUTOARG*/
             // Outputs
@@ -53,7 +54,7 @@ module sblk(/*AUTOARG*/
    // weight buffer rd signal
    wire [WID_WADDR-1:0]       w_rd_addr;
    // psum buffer wr signal
-   wire [2*WID_PSUM-1:0]      psum_wr_data;
+   reg  [2*WID_PSUM-1:0]      psum_wr_data;
    wire [WID_PSUMADDR-1:0]    psum_wr_addr;
    wire                       psum_wr_en;
    // psum buffer rd signal
@@ -75,17 +76,23 @@ module sblk(/*AUTOARG*/
    end
 
    // clkh->clkl connection, add two delay stages for timing
-   reg [WID_PSUM-1:0]     psum_wr_d0;
-   always_ff @(posedge clk_h or negedge rst_n) begin : proc_psum_wr_d0
+   reg [WID_PSUM-1:0]     psum_wr_d;
+   always_ff @(posedge clk_h or negedge rst_n) begin : proc_psum_wr_d
       if(~rst_n) begin
-         psum_wr_d0 <= 0;
+         psum_wr_d <= 0;
       end else begin
          //FIXME: select the proper bits from the last stile psum
-         psum_wr_d0 <= psum[(N_TILE-1)*48+PSUM_SPLIT_START_POS+:WID_PSUM];
+        psum_wr_d <= psum[(N_TILE-1)*48+PSUM_SPLIT_START_POS+:WID_PSUM];
       end
    end
-   assign psum_wr_data = {psum[(N_TILE-1)*48+PSUM_SPLIT_START_POS+:WID_PSUM], psum_wr_d0};
 
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_psum_wr_data
+      if(~rst_n) begin
+         psum_wr_data <= 0;
+      end else begin
+         psum_wr_data <= {psum[(N_TILE-1)*48+PSUM_SPLIT_START_POS+:WID_PSUM], psum_wr_d};
+      end
+   end
 
    reg clkh_toggle;
    always_ff @(posedge clk_h or negedge rst_n) begin : proc_clkh_toggle
@@ -96,44 +103,54 @@ module sblk(/*AUTOARG*/
       end
    end
 
-   reg [WID_PSUM-1:0]     psum_stile_in;
-   reg [WID_PSUM-1:0]     psum_stile_in_d;   
-   // toggle the half word from psum buffer as the psum input of first stile
-   always_ff @(posedge clk_h or negedge rst_n) begin : proc_psum_stile_in
+
+   wire [WID_PSUM-1:0]      psum_stile_in;
+   reg [WID_PSUM-1:0]       psum_stile_in_d;
+   reg [2*WID_PSUM-1:0]     psum_rd_data_d;
+   assign psum_stile_in = clkh_toggle? psum_rd_data_d[WID_PSUM+:WID_PSUM] : psum_rd_data_d[0+:WID_PSUM];
+
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_psum_rd_data_d
       if(~rst_n) begin
-         psum_stile_in <= 0;
+         psum_rd_data_d <= 0;     
+      end else begin         
+         psum_rd_data_d <= psum_rd_data;
+      end
+   end
+
+   always_ff @(posedge clk_h or negedge rst_n) begin : proc_psum_stile_in_d
+      if(~rst_n) begin
          psum_stile_in_d <= 0;
       end else begin
-         psum_stile_in <= clkh_toggle? psum_rd_data[WID_PSUM+:WID_PSUM] : psum_rd_data[0+:WID_PSUM];
          psum_stile_in_d <= psum_stile_in;
       end
    end
 
-
    // delay the addr signals, NOTE: 1-cycle dealy constraint of cascaded DSPs
-   reg [WID_ACTADDR-2:0] act_rd_addr_hbit_d[N_TILE-1:0];   
-   always_ff @(posedge clk_l or negedge rst_n) begin : proc_act_rd_addr_hbit_d
+   reg [WID_ACTADDR-1:0] act_rd_addr_d[N_TILE+4:0];
+   always_ff @(posedge clk_h or negedge rst_n) begin : proc_act_rd_addr_d
       if(~rst_n) begin
-         for (int jj=0; jj<N_TILE; jj=jj+1) begin
-            act_rd_addr_hbit_d[jj] <= 0;
+         for (int jj=0; jj<N_TILE+5; jj=jj+1) begin
+            act_rd_addr_d[jj] <= 0;
          end
       end else begin
-         act_rd_addr_hbit_d[0] <= act_rd_addr_hbit;
-         for (int jj=1; jj<N_TILE; jj=jj+1) begin
-            act_rd_addr_hbit_d[jj] <= act_rd_addr_hbit_d[jj-1];
+         act_rd_addr_d[0] <= {act_rd_addr_hbit, clkh_toggle};
+         for (int jj=1; jj<N_TILE+5; jj=jj+1) begin
+            act_rd_addr_d[jj] <= act_rd_addr_d[jj-1];
          end
       end
    end
 
-   reg [WID_WADDR-1:0] w_rd_addr_d[N_TILE-1:0];
-   always_ff @(posedge clk_l or negedge rst_n) begin : proc_w_rd_addr_d
+
+   // propogate the w_rd_addr with clk_h 
+   reg [WID_WADDR-1:0] w_rd_addr_d[N_TILE:0];
+   always_ff @(posedge clk_h or negedge rst_n) begin : proc_w_rd_addr_d
       if(~rst_n) begin
-         for (int jj=0; jj<N_TILE; jj=jj+1) begin
+         for (int jj=0; jj<N_TILE+1; jj=jj+1) begin
             w_rd_addr_d[jj] <= 0;
          end
       end else begin
          w_rd_addr_d[0] <= w_rd_addr;
-         for (int jj=1; jj<N_TILE; jj=jj+1) begin
+         for (int jj=1; jj<N_TILE+1; jj=jj+1) begin
             w_rd_addr_d[jj] <= w_rd_addr_d[jj-1];
          end
       end
@@ -177,13 +194,13 @@ module sblk(/*AUTOARG*/
                        .clk_h(clk_h),
                        .rst_n(rst_n),
                        .w_wr_en(1'b0),
-                       .w_rd_addr(w_rd_addr_d[0]),
+                       .w_rd_addr(w_rd_addr_d[1]),
                        .act_wr_data(act_wr_data),
                        .act_wr_en(act_wr_en[0]),
                        .act_wr_addr_hbit(act_wr_addr_hbit),
-                       .act_rd_addr_hbit(act_rd_addr_hbit_d[0]),
+                       .act_rd_addr(act_rd_addr_d[5]),
                        .p_casout(psum[0*48+:48]),
-                       .p_sumin(psum_stile_in_d)                  
+                       .p_sumin({{(48-PSUM_SPLIT_START_POS-WID_PSUM){1'b0}}, psum_stile_in_d, {PSUM_SPLIT_START_POS{1'b0}}})
                        );
    // middle tiles
    genvar                         ii;
@@ -195,11 +212,11 @@ module sblk(/*AUTOARG*/
                            .clk_h(clk_h),
                            .rst_n(rst_n),
                            .w_wr_en(1'b0),
-                           .w_rd_addr(w_rd_addr_d[ii]),
+                           .w_rd_addr(w_rd_addr_d[ii+1]),
                            .act_wr_data(act_wr_data),
                            .act_wr_en(act_wr_en[ii]),
                            .act_wr_addr_hbit(act_wr_addr_hbit),
-                           .act_rd_addr_hbit(act_rd_addr_hbit_d[ii]),
+                           .act_rd_addr(act_rd_addr_d[ii+5]),
                            .p_casout(psum[ii*48+:48]),
                            .p_casin(psum[(ii-1)*48+:48])
                            );
@@ -213,11 +230,11 @@ module sblk(/*AUTOARG*/
                      .clk_h(clk_h),
                      .rst_n(rst_n),
                      .w_wr_en(1'b0),
-                     .w_rd_addr(w_rd_addr_d[N_TILE-1]),
+                     .w_rd_addr(w_rd_addr_d[N_TILE]),
                      .act_wr_data(act_wr_data),
                      .act_wr_en(act_wr_en[N_TILE-1]),
                      .act_wr_addr_hbit(act_wr_addr_hbit),
-                     .act_rd_addr_hbit(act_rd_addr_hbit_d[N_TILE-1]),
+                     .act_rd_addr(act_rd_addr_d[N_TILE+4]),
                      .p_out(psum[(N_TILE-1)*48+:48]),
                      .p_casin(psum[(N_TILE-1-1)*48+:48])
                      );
@@ -229,7 +246,6 @@ module sblk(/*AUTOARG*/
               .CASCADE_ORDER_B("NONE"),
               // CLOCK_DOMAINS: "COMMON", "INDEPENDENT" 
               .CLOCK_DOMAINS("INDEPENDENT"),
-              .DOB_REG(1),
               // Collision check: "ALL", "GENERATE_X_ONLY", "NONE", "WARNING_ONLY" 
               .SIM_COLLISION_CHECK("ALL"),
               // DOA_REG, DOB_REG: Optional output register (0, 1)
@@ -332,14 +348,14 @@ module sblk(/*AUTOARG*/
                   .DINADIN(psum_wr_data[0+:WID_PSUM]),                 // 32-bit input: Port A data/LSB data
                   // .DINPADINP(DINPADINP),             // 4-bit input: Port A parity/LSB parity
                   // Port B Address/Control Signals inputs: Port B address and control signals
-                  .ADDRBWRADDR({psum_wr_addr, 6'd0}),         // 15-bit input: B/Write port address
+                  .ADDRBWRADDR({psum_wr_addr, {(15- WID_PSUMADDR){1'b0}}}),         // 15-bit input: B/Write port address
                   .ADDRENB(1'b1),                 // 1-bit input: Active-High B/Write port address enable
                   .CLKBWRCLK(clk_l),             // 1-bit input: B/Write port clock
                   .ENBWREN(1'b1),                 // 1-bit input: Port B enable/Write enable
                   // .REGCEB(REGCEB),                   // 1-bit input: Port B register enable
                   .RSTRAMB(~rst_n),                 // 1-bit input: Port B set/reset
                   .RSTREGB(~rst_n),                 // 1-bit input: Port B register set/reset
-                  .WEBWE(psum_wr_en),                     // 8-bit input: Port B write enable/Write enable
+                  .WEBWE({8{psum_wr_en}}),                     // 8-bit input: Port B write enable/Write enable
                   // Port B Data inputs: Port B data
                   .DINBDIN(psum_wr_data[WID_PSUM+:WID_PSUM])                // 32-bit input: Port B data/MSB data
                   // .DINPBDINP(DINPBDINP)              // 4-bit input: Port B parity/MSB parity

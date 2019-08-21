@@ -1,3 +1,5 @@
+`timescale 1ns / 1ns
+
 module sblk_ctrl(/*AUTOARG*/
    // Outputs
    act_in_req, w_rd_addr, act_rd_addr_hbit, act_wr_addr_hbit,
@@ -21,7 +23,7 @@ module sblk_ctrl(/*AUTOARG*/
 
    parameter WID_INST = WID_INST_TN + WID_INST_TM + WID_INST_TP + WID_INST_LN + WID_INST_LP;
    //FIXME: delay length between psum read and psum write back, calculated with N_TILE
-   parameter WB_DELAY_CYCLE = N_TILE + 8; 
+   parameter WB_DELAY_CYCLE = 1 + 5 + N_TILE/2;
 
    int ii;
 
@@ -94,8 +96,8 @@ module sblk_ctrl(/*AUTOARG*/
    wire inst_finish;
 
    wire comp_flag; 
-   reg [WB_DELAY_CYCLE:0] comp_flag_d;
-   reg [WB_DELAY_CYCLE:0] inst_finish_d;   
+   reg [WB_DELAY_CYCLE-1:0] comp_flag_d;
+   reg [WB_DELAY_CYCLE-1:0] inst_finish_d;   
    always_ff @(posedge clk_l or negedge rst_n) begin : proc_comp_flag_d
       if(~rst_n) begin
          comp_flag_d <= 0;
@@ -103,7 +105,7 @@ module sblk_ctrl(/*AUTOARG*/
       end else begin
          comp_flag_d[0] <= comp_flag;
          inst_finish_d[0] <= inst_finish;
-         for (ii=1; ii<WB_DELAY_CYCLE+1; ii=ii+1) begin
+         for (ii=1; ii<WB_DELAY_CYCLE; ii=ii+1) begin
             comp_flag_d[ii] <= comp_flag_d[ii-1];
             inst_finish_d[ii] <= inst_finish_d[ii-1];
          end
@@ -185,7 +187,7 @@ module sblk_ctrl(/*AUTOARG*/
 
    // delay psum_wr_addr signal
    int jj;
-   reg [WID_PSUMADDR-1:0] psum_wr_addr_d[WB_DELAY_CYCLE-1:0];
+   reg [WID_PSUMADDR-1:0] psum_wr_addr_d[WB_DELAY_CYCLE-2:0];
    always_ff @(posedge clk_l or negedge rst_n) begin : proc_psum_wr_addr_d
       if(~rst_n) begin
          for (jj=0; jj<WB_DELAY_CYCLE; jj=jj+1) begin
@@ -320,7 +322,8 @@ module sblk_ctrl(/*AUTOARG*/
       if(~rst_n) begin
          status_sblk <= 0;
       end else begin
-         status_sblk <= inst_en_d? 1 : ((inst_finish_d[WB_DELAY_CYCLE] & ~comp_flag_d[WB_DELAY_CYCLE-1])? 0 : status_sblk);
+         // FIXME
+         status_sblk <= inst_en_d? 1 : ((inst_finish_d[WB_DELAY_CYCLE-1] & ~comp_flag_d[WB_DELAY_CYCLE-1])? 0 : status_sblk);
       end
    end   
 

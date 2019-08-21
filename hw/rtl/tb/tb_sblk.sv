@@ -3,7 +3,8 @@
 
 module tb_sblk;
 
-   parameter CLK_PERIOD = 20;
+   parameter CLKL_PERIOD = 4;
+   parameter CLKH_PERIOD = CLKL_PERIOD/2;
 
    parameter N_TILE = 4;
    parameter WID_N_TILE = $clog2(N_TILE);
@@ -52,12 +53,12 @@ module tb_sblk;
 
    initial begin
       clk_l = 1'b1;
-      forever #(CLK_PERIOD/2) clk_l = ~clk_l;
+      forever #(CLKL_PERIOD/2) clk_l = ~clk_l;
    end
 
    initial begin
       clk_h = 1'b1;
-      forever #(CLK_PERIOD/4) clk_h = ~clk_h;
+      forever #(CLKH_PERIOD/2) clk_h = ~clk_h;
    end
 
    initial begin
@@ -108,7 +109,7 @@ module tb_sblk;
    end
 
    initial begin
-      repeat(5000) @(posedge clk_l);
+      repeat(1000) @(posedge clk_l);
       $finish;
    end
 

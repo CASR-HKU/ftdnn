@@ -1,11 +1,12 @@
 // SuperTile
+`timescale 1ns / 1ns
 
 module stile(/*AUTOARG*/
              // Outputs
              p_out, p_casout,
              // Inputs
              clk_h, clk_l, rst_n, w_wr_data, w_wr_addr, w_wr_en, w_rd_addr,
-             act_wr_data, act_wr_addr_hbit, act_wr_en, act_rd_addr_hbit,
+             act_wr_data, act_wr_addr_hbit, act_wr_en, act_rd_addr,
              p_casin, p_sumin
              );
 
@@ -16,7 +17,7 @@ module stile(/*AUTOARG*/
    // TODO: Distributed RAM size, 64x1S cost 1LUT
    parameter WID_ACTADDR = 6;
    // OPMODE for DSP
-   parameter OPMODE = 7'b0010101;  // 7'b0110101 for the start DSP
+   parameter OPMODE = 7'b0010101;  // 7'b0110101 for the start NOTE: for DSPE2 in UltraScale, should use 8bit 8'bx0010101
    parameter [256-1:0] BRAM_INIT_VAL[64-1:0] = '{64{256'h0001000100010001000100010001000100010001000100010001000100010001}};
 
    input wire clk_h;
@@ -38,10 +39,10 @@ module stile(/*AUTOARG*/
    input wire                   act_wr_en;
 
    wire [WID_ACT-1:0]           act_rd_data;
-   input wire [WID_ACTADDR-2:0] act_rd_addr_hbit;
+   input wire [WID_ACTADDR-1:0] act_rd_addr;
 
    
-   reg                          act_rd_addr_lbit;
+   // reg                          act_rd_addr_lbit;
    reg                          act_wr_addr_lbit;
    
    // DSP connection signal
@@ -52,10 +53,10 @@ module stile(/*AUTOARG*/
 
    always_ff @(posedge clk_h or negedge rst_n) begin : proc_act_rd_wr_addr_lbit
       if(~rst_n) begin
-         act_rd_addr_lbit <= 0;
+         // act_rd_addr_lbit <= 0;
          act_wr_addr_lbit <= 0;
       end else begin
-         act_rd_addr_lbit <= ~act_rd_addr_lbit;
+         // act_rd_addr_lbit <= ~act_rd_addr_lbit;
          act_wr_addr_lbit <= ~act_wr_addr_lbit;
       end
    end
@@ -105,7 +106,7 @@ module stile(/*AUTOARG*/
              .ACASCREG(1),                      // Number of pipeline stages between A/ACIN and ACOUT (0-2)
              .ADREG(1),                         // Pipeline stages for pre-adder (0-1)
              .ALUMODEREG(1),                    // Pipeline stages for ALUMODE (0-1)
-             .AREG(2),                          // Pipeline stages for A (0-2)
+             .AREG(1),                          // Pipeline stages for A (0-2)
              .BCASCREG(1),                      // Number of pipeline stages between B/BCIN and BCOUT (0-2)
              .BREG(1),                          // Pipeline stages for B (0-2)
              .CARRYINREG(1),                    // Pipeline stages for CARRYIN (0-1)
@@ -198,12 +199,12 @@ module stile(/*AUTOARG*/
                         .A4(act_wr_addr_hbit[3]),       // Rw/ address[4] input bit
                         .A5(act_wr_addr_hbit[4]),       // Rw/ address[5] input bit
                         .D(act_wr_data_clkh[ii]),         // Write 1-bit data input
-                        .DPRA0(act_rd_addr_lbit), // Read-only address[0] input bit
-                        .DPRA1(act_rd_addr_hbit[0]), // Read-only address[1] input bit
-                        .DPRA2(act_rd_addr_hbit[1]), // Read-only address[2] input bit
-                        .DPRA3(act_rd_addr_hbit[2]), // Read-only address[3] input bit
-                        .DPRA4(act_rd_addr_hbit[3]), // Read-only address[4] input bit
-                        .DPRA5(act_rd_addr_hbit[4]), // Read-only address[5] input bit
+                        .DPRA0(act_rd_addr[0]), // Read-only address[0] input bit
+                        .DPRA1(act_rd_addr[1]), // Read-only address[1] input bit
+                        .DPRA2(act_rd_addr[2]), // Read-only address[2] input bit
+                        .DPRA3(act_rd_addr[3]), // Read-only address[3] input bit
+                        .DPRA4(act_rd_addr[4]), // Read-only address[4] input bit
+                        .DPRA5(act_rd_addr[5]), // Read-only address[5] input bit
                         .WCLK(clk_h),   // Write clock input
                         .WE(act_wr_en)        // Write enable input
                         );
@@ -354,7 +355,7 @@ module stile(/*AUTOARG*/
       // .CASOREGIMUXEN_A(CASOREGIMUXEN_A), // 1-bit input: Port A registered output data enable
       // .CASOREGIMUXEN_B(CASOREGIMUXEN_B), // 1-bit input: Port B registered output data enable
       // Port A Address/Control Signals inputs: Port A address and control signals
-      .ADDRARDADDR({w_rd_addr, 4'b0000}),         // 14-bit input: A/Read port address
+      .ADDRARDADDR({w_rd_addr, {(14-WID_WADDR){1'b0}}}),         // 14-bit input: A/Read port address
       .ADDRENA(1'b1),                 // 1-bit input: Active-High A/Read port address enable
       .CLKARDCLK(clk_l),             // 1-bit input: A/Read port clock
       .ENARDEN(1'b1),                 // 1-bit input: Port A enable/Read enable
