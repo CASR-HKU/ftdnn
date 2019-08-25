@@ -61,6 +61,16 @@ module stile(/*AUTOARG*/
       end
    end
 
+   reg [WID_ACT-1:0] act_rd_data_d;
+   always_ff @(posedge clk_h or negedge rst_n) begin : proc_act_rd_data_d
+     if(~rst_n) begin
+       act_rd_data_d <= 0;
+     end else begin
+       act_rd_data_d <= act_rd_data;
+     end
+   end
+
+
    wire [WID_ACT-1:0] act_wr_data_clkh;
    assign act_wr_data_clkh = act_wr_addr_lbit? act_wr_data[WID_ACT+:WID_ACT] : act_wr_data[0+:WID_ACT];
    
@@ -148,7 +158,7 @@ module stile(/*AUTOARG*/
                  .OPMODE(OPMODE),                 // 9-bit input: Operation mode
                  // Data inputs: Data Ports
                  .A(w_rd_data),                           // 30-bit input: A data
-                 .B(act_rd_data),                           // 18-bit input: B data
+                 .B(act_rd_data_d),                           // 18-bit input: B data
                  .C(p_sumin),                           // 48-bit input: C data
                  // .CARRYIN(CARRYIN),               // 1-bit input: Carry-in
                  // .D(D),                           // 27-bit input: D data

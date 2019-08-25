@@ -3,14 +3,14 @@
 
 module sblk(/*AUTOARG*/
             // Outputs
-            act_data_in_req, status_sblk,
+            act_data_in_req, status_sblk, psum_rd_data,
             // Inputs
             clk_h, clk_l, rst_n, act_data_in, act_data_in_vld, inst_data,
             inst_en
             );
 
    // number of supertile inside the superblock
-   parameter N_TILE = 4;
+   parameter N_TILE = 40;
    parameter WID_N_TILE = $clog2(N_TILE);
    parameter WID_W = 16;
    parameter WID_WADDR = 10;
@@ -21,12 +21,18 @@ module sblk(/*AUTOARG*/
    // strip the tail 0-btis in the 48-bits psum from dsp   
    parameter PSUM_SPLIT_START_POS = 0;
 
-   parameter WID_INST_TN=4;
-   parameter WID_INST_TM=9;
-   parameter WID_INST_TP=5;
+   // parameter WID_INST_TN=4;
+   // parameter WID_INST_TM=9;
+   // parameter WID_INST_TP=5;
+   // // FIXME: arbitrary width
+   // parameter WID_INST_LN=5;
+   // parameter WID_INST_LP=5;
+   parameter WID_INST_TN=3;
+   parameter WID_INST_TM=3;
+   parameter WID_INST_TP=2;
    // FIXME: arbitrary width
-   parameter WID_INST_LN=5;
-   parameter WID_INST_LP=5;
+   parameter WID_INST_LN=3;
+   parameter WID_INST_LP=3;   
    parameter WID_INST = WID_INST_TN + WID_INST_TM + WID_INST_TP + WID_INST_LN + WID_INST_LP;
 
    // parameter string BRAM_INIT_FILE[4] = {};
@@ -59,7 +65,8 @@ module sblk(/*AUTOARG*/
    wire                       psum_wr_en;
    // psum buffer rd signal
    wire [WID_PSUMADDR-1:0]    psum_rd_addr;
-   wire [2*WID_PSUM-1:0]      psum_rd_data;
+   // FIXME
+   output wire [2*WID_PSUM-1:0]      psum_rd_data;
 
 
    // tmp wire for psum of each DSP
@@ -198,7 +205,7 @@ module sblk(/*AUTOARG*/
                        .act_wr_data(act_wr_data),
                        .act_wr_en(act_wr_en[0]),
                        .act_wr_addr_hbit(act_wr_addr_hbit),
-                       .act_rd_addr(act_rd_addr_d[5]),
+                       .act_rd_addr(act_rd_addr_d[4]),
                        .p_casout(psum[0*48+:48]),
                        .p_sumin({{(48-PSUM_SPLIT_START_POS-WID_PSUM){1'b0}}, psum_stile_in_d, {PSUM_SPLIT_START_POS{1'b0}}})
                        );
@@ -216,7 +223,7 @@ module sblk(/*AUTOARG*/
                            .act_wr_data(act_wr_data),
                            .act_wr_en(act_wr_en[ii]),
                            .act_wr_addr_hbit(act_wr_addr_hbit),
-                           .act_rd_addr(act_rd_addr_d[ii+5]),
+                           .act_rd_addr(act_rd_addr_d[ii+4]),
                            .p_casout(psum[ii*48+:48]),
                            .p_casin(psum[(ii-1)*48+:48])
                            );
@@ -234,7 +241,7 @@ module sblk(/*AUTOARG*/
                      .act_wr_data(act_wr_data),
                      .act_wr_en(act_wr_en[N_TILE-1]),
                      .act_wr_addr_hbit(act_wr_addr_hbit),
-                     .act_rd_addr(act_rd_addr_d[N_TILE+4]),
+                     .act_rd_addr(act_rd_addr_d[N_TILE+3]),
                      .p_out(psum[(N_TILE-1)*48+:48]),
                      .p_casin(psum[(N_TILE-1-1)*48+:48])
                      );

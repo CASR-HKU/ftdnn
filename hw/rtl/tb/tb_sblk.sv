@@ -16,12 +16,12 @@ module tb_sblk;
    parameter WID_PSUMADDR = 9;
    parameter PSUM_SPLIT_START_POS = 12;
 
-   parameter WID_INST_TN=4;
-   parameter WID_INST_TM=9;
-   parameter WID_INST_TP=5;
+   parameter WID_INST_TN=3;
+   parameter WID_INST_TM=3;
+   parameter WID_INST_TP=2;
    // FIXME: arbitrary width
-   parameter WID_INST_LN=5;
-   parameter WID_INST_LP=5;
+   parameter WID_INST_LN=3;
+   parameter WID_INST_LP=3;
 
    parameter WID_INST = WID_INST_TN + WID_INST_TM + WID_INST_TP + WID_INST_LN + WID_INST_LP;
    parameter WB_DELAY_CYCLE = N_TILE + 8;

@@ -14,12 +14,12 @@ module sblk_ctrl(/*AUTOARG*/
    parameter WID_ACTADDR = 6;
    parameter WID_PSUMADDR = 9;
 
-   parameter WID_INST_TN=4;
-   parameter WID_INST_TM=9;
-   parameter WID_INST_TP=5;
+   parameter WID_INST_TN=3;
+   parameter WID_INST_TM=3;
+   parameter WID_INST_TP=2;
    // FIXME: arbitrary width
-   parameter WID_INST_LN=5;
-   parameter WID_INST_LP=5;
+   parameter WID_INST_LN=3;
+   parameter WID_INST_LP=3;
 
    parameter WID_INST = WID_INST_TN + WID_INST_TM + WID_INST_TP + WID_INST_LN + WID_INST_LP;
    //FIXME: delay length between psum read and psum write back, calculated with N_TILE
@@ -96,8 +96,8 @@ module sblk_ctrl(/*AUTOARG*/
    wire inst_finish;
 
    wire comp_flag; 
-   reg [WB_DELAY_CYCLE-1:0] comp_flag_d;
-   reg [WB_DELAY_CYCLE-1:0] inst_finish_d;   
+   reg [WB_DELAY_CYCLE:0] comp_flag_d;
+   reg [WB_DELAY_CYCLE:0] inst_finish_d;   
    always_ff @(posedge clk_l or negedge rst_n) begin : proc_comp_flag_d
       if(~rst_n) begin
          comp_flag_d <= 0;
@@ -105,7 +105,7 @@ module sblk_ctrl(/*AUTOARG*/
       end else begin
          comp_flag_d[0] <= comp_flag;
          inst_finish_d[0] <= inst_finish;
-         for (ii=1; ii<WB_DELAY_CYCLE; ii=ii+1) begin
+         for (ii=1; ii<WB_DELAY_CYCLE+1; ii=ii+1) begin
             comp_flag_d[ii] <= comp_flag_d[ii-1];
             inst_finish_d[ii] <= inst_finish_d[ii-1];
          end
@@ -323,7 +323,7 @@ module sblk_ctrl(/*AUTOARG*/
          status_sblk <= 0;
       end else begin
          // FIXME
-         status_sblk <= inst_en_d? 1 : ((inst_finish_d[WB_DELAY_CYCLE-1] & ~comp_flag_d[WB_DELAY_CYCLE-1])? 0 : status_sblk);
+         status_sblk <= inst_en_d? 1 : ((inst_finish_d[WB_DELAY_CYCLE] & ~comp_flag_d[WB_DELAY_CYCLE-1])? 0 : status_sblk);
       end
    end   
 
