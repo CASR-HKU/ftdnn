@@ -1,4 +1,5 @@
 // Behavior of SuperBlock Unit (units in horizontal compose the SuperBlock)
+`timescale 1ns / 1ns
 
 module sblk_unit(/*AUTOARG*/
                  // Outputs
