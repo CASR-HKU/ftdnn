@@ -60,6 +60,7 @@ module sblk_row(/*AUTOARG*/
       for (ii=0; ii<N_ROW; ii=ii+1) begin: u_sblk
          sblk #(
                 .N_TILE(N_TILE),
+                .N_COLUMN(N_COLUMN),
                 .WID_N_TILE(WID_N_TILE),
                 .WID_W(WID_W),
                 .WID_WADDR(WID_WADDR),
