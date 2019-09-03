@@ -1,8 +1,9 @@
 # sim for the overall data throughput
 
-
 from math import floor as floor
 from math import ceil as ceil
+
+import pickle
 
 # set the hardware config
 hw_conf = {
@@ -44,6 +45,14 @@ if __name__ == '__main__':
                             for sp_h_d3 in range(1, min(floor(hw_conf['D3'] / sp_n_d3 / sp_m_d3 / sp_w_d3), workload['H']) + 1):
                                 for sp_b_d3 in range(1, min(floor(hw_conf['D3'] / sp_n_d3 / sp_m_d3 / sp_w_d3 / sp_h_d3), workload['B']) + 1):
                                     sp_comb.append((sp_n_d1, sp_i_d1, sp_j_d1, sp_m_d2, sp_n_d3, sp_m_d3, sp_w_d3, sp_h_d3, sp_b_d3))
+
+
+    # with open('objs.pkl', 'rb') as dump_file:
+    #     sp_comb, hw_conf, workload = pickle.load(dump_file)
+    # dump_file.close()
+
+
+
 
     cnt = 0
     global_sol = []
@@ -121,6 +130,8 @@ if __name__ == '__main__':
         global_perf.append(tp_perf)
     print("Performance for all partition solution has been generated!")
 
-
+    with open('objs.pkl', 'wb') as dump_file:
+        pickle.dump([sp_comb, global_sol, global_perf, hw_conf, workload], dump_file)
+    dump_file.close()
 
 
