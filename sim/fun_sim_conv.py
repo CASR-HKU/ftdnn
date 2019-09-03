@@ -16,9 +16,14 @@ hw_conf = {
 
 
 workload = {
-    'N': 8,
-    'M': 200,
-    'P': 512,
+    'B': 10,
+    'M': 20,
+    'N': 100,
+    'W': 50,
+    'H': 50,
+    'I': 3,
+    'J': 3,
+    'STRIDE': 1
 }
 
 
@@ -27,48 +32,62 @@ if __name__ == '__main__':
     # generate all possible `spatial partition` combinations
     sp_comb = []
 
-    # STEP1: set up the fixed partition dim
-    sp_n_d1 = min(hw_conf['D1'], workload['N'])
-    sp_m_d2 = min(hw_conf['D2'], workload['M'])
-    # STEP2: enumerate all possible combinations, regardless of the utilization
-    for sp_n_d3 in range(1, min(hw_conf['D3'], floor(workload['N']/sp_n_d1)) +1):
-        for sp_m_d3 in range(1, min(floor(hw_conf['D3']/sp_n_d3), floor(workload['M']/sp_m_d2))+1):
-            sp_p_d3 = min(floor(hw_conf['D3']/sp_n_d3/sp_m_d3), workload['P'])
-            sp_comb.append((sp_n_d1, sp_m_d2, sp_n_d3, sp_m_d3, sp_p_d3))
+    # STEP1: enumerate all possible combinations, regardless of the utilization
+    for sp_n_d1 in range(1, min(hw_conf['D1'], workload['N'])+1):
+        for sp_i_d1 in range(1, min(floor(hw_conf['D1']/sp_n_d1), workload['I']) + 1):
+            for sp_j_d1 in range(1, min(floor(hw_conf['D1'] / sp_n_d1 / sp_i_d1), workload['J']) + 1):
+                #
+                sp_m_d2 = min(hw_conf['D2'], workload['M'])
+                for sp_n_d3 in range(1, min(hw_conf['D3'], ceil(workload['N']/sp_n_d1))+1):
+                    for sp_m_d3 in range(1, min(floor(hw_conf['D3']/sp_n_d3), ceil(workload['M']/sp_m_d2)) + 1):
+                        for sp_w_d3 in range(1, min(floor(hw_conf['D3'] / sp_n_d3 / sp_m_d3), workload['W']) + 1):
+                            for sp_h_d3 in range(1, min(floor(hw_conf['D3'] / sp_n_d3 / sp_m_d3 / sp_w_d3), workload['H']) + 1):
+                                for sp_b_d3 in range(1, min(floor(hw_conf['D3'] / sp_n_d3 / sp_m_d3 / sp_w_d3 / sp_h_d3), workload['B']) + 1):
+                                    sp_comb.append((sp_n_d1, sp_i_d1, sp_j_d1, sp_m_d2, sp_n_d3, sp_m_d3, sp_w_d3, sp_h_d3, sp_b_d3))
 
-
-
+    cnt = 0
     global_sol = []
     for sp_opt in sp_comb:
-        (sp_n_d1, sp_m_d2, sp_n_d3, sp_m_d3, sp_p_d3) = sp_opt
+        (sp_n_d1, sp_i_d1, sp_j_d1, sp_m_d2, sp_n_d3, sp_m_d3, sp_w_d3, sp_h_d3, sp_b_d3) = sp_opt
         tp_sol = []
         # generate all possible `temporal partition` combinations
         # STEP1: T dim
-        # p starts from 2 due to the weight sharing
-        for tp in range(2, floor(min(workload['P']/sp_p_d3, hw_conf['N_ACT']))+1):
-            for tn in range(1, floor(min(workload['N']/sp_n_d1/sp_n_d3, hw_conf['N_ACT']/tp))+1):
-                for tm in range(1, floor(min(workload['M']/sp_m_d2/sp_m_d3, hw_conf['N_PSUM']/tp))+1):
-                    # the size of lp is constrainted by the psum_buf
-                    lp = min(ceil(workload['P']/sp_p_d3/tp), floor(hw_conf['N_PSUM']/tm/tp))
-                    # calculate how many times the previous block should be executed
-                    xm = ceil(workload['M']/sp_m_d2/sp_m_d3/tm)
-                    xn = ceil(workload['N']/sp_n_d1/sp_n_d3/tn)
-                    xp = ceil(workload['P']/sp_p_d3/lp/tp)
-                    #FIXME: verify the hw constraints, maybe more than listed
-                    ## CONST1: accumulation latency: D1(N_TILE/SBLK) + 4
-                    if ((tp*tm)<(hw_conf['D1']+4)):
-                        continue
-                    ## CONST2: the weight buffer consumption should be less than N_W
-                    if (tn*tm*xm*xn>hw_conf['N_W']):
-                        continue
-                    ## CONST3:
-                    if (tn*tm>hw_conf['N_ACT']):
-                        continue
-                    if (tp*tm*lp>hw_conf['N_PSUM']):
-                        continue
-                    # append the temporal solution for the current spatial-partition solution
-                    tp_sol.append((xm, xn, xp, lp, tm, tn, tp))
-        # append to the global_sol which is coupled to the sp_comb
+        # tw starts from 2 due to the weight sharing
+        for tw in range(2, min(ceil(workload['W']/sp_w_d3), hw_conf['N_ACT'])+1):
+            for th in range(1, min(ceil(workload['H']/sp_h_d3), floor(hw_conf['N_ACT']/tw)+1)):
+                for tm in range(1, min(ceil(workload['M']/sp_m_d2/sp_m_d3), floor(hw_conf['N_PSUM']/tw/th))+1):
+                    ti = ceil(workload['I']/sp_i_d1)
+                    tj = ceil(workload['J'] / sp_j_d1)
+                    for tn in range(1, min(ceil(workload['N']/sp_n_d1/sp_n_d3), floor(hw_conf['N_ACT']/tw/th)+1)):
+                        # NOTE: ln can be 1 to workload boundary, the larger ln, the less psum I/O
+                        for ln in range(1, ceil(workload['N']/sp_n_d1/sp_n_d3/tn)+1):
+                            xm = ceil(workload['M'] / sp_m_d2 / sp_m_d2 / tm)
+                            xn = ceil(workload['N'] / sp_n_d1 / sp_n_d3 / tn / ln)
+                            xw = ceil(workload['W'] / sp_w_d3 / tw )
+                            xh = ceil(workload['H'] / sp_h_d3 / th)
+                            # FIXME: verify the hw constraints, maybe more than listed
+                            ##CONST1: accumulation latency: D1(N_TILE/SBLK) + 4
+                            if ((tw*th*tm) < (hw_conf['D1'] + 4)):
+                                continue
+                            ## CONST2: the weight buffer consumption should be less than N_W
+                            if (tj*tj*tm*tn*ln*xn*xm>hw_conf['N_W']):
+                                continue
+                            ##CONST3:
+                            ## ACT BUF REQUIREMENT
+                            tmp1 = (abs(ti - workload['STRIDE']) + ti - workload['STRIDE'])/2
+                            tmp2 = (abs(tj - workload['STRIDE']) + tj - workload['STRIDE']) / 2
+                            act_buf = (ti * tw - tmp1 * (tw-1)) * (tj * th - tmp2 * (th-1))
+                            if (act_buf>hw_conf['N_ACT']):
+                                continue
+                            ##CONST4:
+                            if (tw*th*tm>hw_conf['N_PSUM']):
+                                continue
+                            # pass all requirement verification
+                            # append the temporal solution for the current spatial-partition solution
+                            tp_sol.append((tw, th, tm, ti, tj, tn, ln, xm, xn, xw, xh, act_buf))
+        if (cnt%10==0):
+            print("Gen for SP_COMB", cnt)
+        cnt = cnt + 1
         global_sol.append(tp_sol)
 
     print("All partition combinations have been generated!")
@@ -76,25 +95,26 @@ if __name__ == '__main__':
     # generate the performance with different partition parameters
     global_perf = []
     for ii in range(0, len(global_sol)):
-        (sp_n_d1, sp_m_d2, sp_n_d3, sp_m_d3, sp_p_d3) = sp_comb[ii]
+        (sp_n_d1, sp_i_d1, sp_j_d1, sp_m_d2, sp_n_d3, sp_m_d3, sp_w_d3, sp_h_d3, sp_b_d3) = sp_comb[ii]
         sp_opt_sol = global_sol[ii]
         tp_perf = []
         for tp_sol in sp_opt_sol:
-            (xm, xn, xp, lp, tm, tn, tp) = tp_sol
+            (tw, th, tm, ti, tj, tn, ln, xm, xn, xw, xh, act_buf) = tp_sol
             # TIME1: computation time
-            time_comp = (tp*tn*tm*lp+hw_conf['D1']+4)*xm*xn*xp
+            ##FIXME: whether add the latency or not?
+            time_comp = (tj*tj*tm*tw*th*tn*ln+hw_conf['D1']+4)*xm*xn*xw*xh
             # weight ram consumption for each TILE
-            w_ram_consump = tn*tm*xm*xn
+            w_ram_consump = tj*tj*tm*tn*ln*xn*xm
             # partial sum buffer consumption for each SBLK
-            psum_ram_consump = tp*tm*lp
+            psum_ram_consump = tw*th*tm
             # act read amount
             # FIXME: NOTE: we assume reuse the act `xm` times and set a buffer with a size of tp*tn*lp
             # act_rd = tp * tn * lp * xm * xn * xp * sp_n_d1 * sp_n_d3 * sp_p_d3
-            act_rd =tp*tn*lp*xn*xp*sp_n_d1*sp_n_d3*sp_p_d3
+            act_rd = act_buf * ln * xw * xh * xn * xm * sp_n_d3 * sp_w_d3 * sp_h_d3 * sp_n_d1 * sp_i_d1 * sp_j_d1
             # psum write amount
-            psum_wr = psum_ram_consump * xm * xn * xp * sp_m_d2 * sp_m_d3 * sp_p_d3
+            psum_wr = psum_ram_consump * xm * xn * xw * xh * sp_m_d2 * sp_m_d3 * sp_w_d3 * sp_h_d3
             # psum rd amount (for accumulation)
-            psum_rd = psum_ram_consump * xm * (xn-1) * xp * sp_m_d2 * sp_m_d3 * sp_p_d3
+            psum_rd = psum_ram_consump * xm * (xn-1) * xw * xh * sp_m_d2 * sp_m_d3 * sp_w_d3 * sp_h_d3
             # record data
             tp_perf.append((time_comp, w_ram_consump, psum_ram_consump, act_rd, psum_wr, psum_rd))
         #
