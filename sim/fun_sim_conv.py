@@ -2,6 +2,7 @@
 
 from math import floor as floor
 from math import ceil as ceil
+from res_score_conv import res_score_conv
 
 # dump log file
 import pickle
@@ -11,6 +12,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Input parameters of hardware config and workload.')
 parser.add_argument('--hw_conf', type=int, nargs='+', help='hardware config [D1, D2, D3, N_ACT, N_W, N_PSUM]')
 parser.add_argument('--workload', type=int, nargs='+', help='workload config [M, N, W, H, I, J, STRIDE]')
+parser.add_argument('--model_name', type=str, nargs=1, help='network model name')
 parser.add_argument('--print', type=bool, nargs=1, default=False, help='print flag')
 
 args = parser.parse_args()
@@ -37,7 +39,7 @@ workload = {
     'STRIDE': args.workload[6]
 }
 
-dump_name = './data/sol_' + str(hw_conf['D1']) + '_' + str(hw_conf['D2']) + '_' + str(hw_conf['D3']) + '_' + str(hw_conf['N_ACT']) + '_' + str(hw_conf['N_W']) + '_' + str(hw_conf['N_PSUM']) + '_' + str(workload['M']) + '_' + str(workload['N']) + '_' + str(workload['W']) + '_' + str(workload['H']) + '_' + str(workload['I']) + '_' + str(workload['J']) + '_' + str(workload['STRIDE']) + '.pkl'
+dump_name = './data/' +  str(args.model_name[0]) + '/sol_' + str(hw_conf['D1']) + '_' + str(hw_conf['D2']) + '_' + str(hw_conf['D3']) + '_' + str(hw_conf['N_ACT']) + '_' + str(hw_conf['N_W']) + '_' + str(hw_conf['N_PSUM']) + '_' + str(workload['M']) + '_' + str(workload['N']) + '_' + str(workload['W']) + '_' + str(workload['H']) + '_' + str(workload['I']) + '_' + str(workload['J']) + '_' + str(workload['STRIDE']) + '.pkl'
 
 if __name__ == '__main__':
 
@@ -116,7 +118,7 @@ if __name__ == '__main__':
     # generate the performance with different partition parameters
     perf = []
     sol = []
-    for ii in range(0, len(global_sol)):
+    for ii in range(len(global_sol)-1, -1, -1):
         (sp_n_d1, sp_i_d1, sp_j_d1, sp_m_d2, sp_n_d3, sp_m_d3, sp_w_d3, sp_h_d3) = sp_comb[ii]
         sp_opt_sol = global_sol[ii]
         for tp_sol in sp_opt_sol:
@@ -145,24 +147,22 @@ if __name__ == '__main__':
         print("Performance for all partition solution has been generated!")
 
 
-
-
-
+    # evaluate the solution
+    [opt_sol, opt_perf, opt_score] = res_score_conv(sol, perf, hw_conf, workload)
 
     # tmp: doump the result
     with open(dump_name, 'wb') as dump_file:
-        pickle.dump([sol, perf, hw_conf, workload], dump_file)
+        pickle.dump([opt_sol, opt_perf, opt_score, hw_conf, workload], dump_file)
     dump_file.close()
 
     # release memory
-    sol = None
     del sol
-    perf = None
     del perf
-    global_sol = None
     del global_sol
-    sp_comb = None
     del sp_comb
+    del opt_sol
+    del opt_perf
+    del opt_score
 
 
 
