@@ -21,10 +21,11 @@ do
     do
         # obtain the workload from csv
         workload=`echo $line | awk -F ',' '{ for(idx=3;idx<10;idx++) print  " " $idx }'`
-        # check if the pthread (python) > 30
-        while [ `ps -A | grep python | awk 'END{ print NR }'` -gt 30 ]; do
-            echo "[waiting] python pthread is" `ps -A | grep python | awk 'END{ print NR }'`
-            sleep 5
+        # check the status of CPU and memory (vmstat measured for each 2 seconds)
+        while [ `vmstat 2 2 | awk 'NR==4{print $13}'` -gt 90 ] || [ $((`free -m | awk '/Mem/{print $3}'`)) -gt 150000 ] || [ `ps -A | grep python | awk 'END{ print NR }'` -gt 10 ]; do
+        # while [ `ps -A | grep python | awk 'END{ print NR }'` -gt 10 ]; do
+            echo "[wait] CPU:" `vmstat 2 2 | awk 'NR==4{print $13}'` "Memory:" $((`free -m | awk '/Mem/{print $3}'`))
+            sleep 10
         done
         # execute the solution finder
         exec python fun_sim_conv.py --hw_conf $hw_conf --workload $workload &

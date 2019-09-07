@@ -68,7 +68,7 @@ if __name__ == '__main__':
         timebound_bus_act_rd = act_rd * sol[idx][5] / hw_conf['D3']
         timebound_bus_psum_wr = psum_wr / hw_conf['D2']
         timebound_dram_rd = (act_rd + psum_rd)/dram_rd_bw
-        timebound_dram_wr = psum_wr / dram_rd_bw
+        timebound_dram_wr = psum_wr / dram_wr_bw
 
         # decide the real time consumption considering the data bandwidth
         real_time = max(time_comp, timebound_bus_act_rd, timebound_bus_psum_wr, timebound_dram_rd, timebound_dram_wr)

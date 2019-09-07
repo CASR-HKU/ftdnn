@@ -119,7 +119,6 @@ if __name__ == '__main__':
     for ii in range(0, len(global_sol)):
         (sp_n_d1, sp_i_d1, sp_j_d1, sp_m_d2, sp_n_d3, sp_m_d3, sp_w_d3, sp_h_d3) = sp_comb[ii]
         sp_opt_sol = global_sol[ii]
-        tp_perf = []
         for tp_sol in sp_opt_sol:
             (tw, th, tm, ti, tj, tn, ln, xm, xn, xw, xh, act_buf) = tp_sol
             # TIME1: computation time
@@ -138,14 +137,33 @@ if __name__ == '__main__':
             # psum rd amount (for accumulation)
             psum_rd = psum_ram_consump * xm * (xn - 1) * xw * xh * sp_m_d2 * sp_m_d3 * sp_w_d3 * sp_h_d3
             # record data
-            tp_perf.append((time_comp, w_ram_consump, psum_ram_consump, act_rd, psum_wr, psum_rd))
             perf.append((time_comp, w_ram_consump, psum_ram_consump, act_rd, psum_wr, psum_rd))
             sol.append((sp_n_d1, sp_i_d1, sp_j_d1, sp_m_d2, sp_n_d3, sp_m_d3, sp_w_d3, sp_h_d3, tw, th, tm, ti, tj, tn, ln, xm, xn, xw, xh))
+        # pop the item in global_sol to save memory
+        global_sol.pop(ii)
     if args.print:
         print("Performance for all partition solution has been generated!")
 
+
+
+
+
+
+    # tmp: doump the result
     with open(dump_name, 'wb') as dump_file:
         pickle.dump([sol, perf, hw_conf, workload], dump_file)
     dump_file.close()
+
+    # release memory
+    sol = None
+    del sol
+    perf = None
+    del perf
+    global_sol = None
+    del global_sol
+    sp_comb = None
+    del sp_comb
+
+
 
 
