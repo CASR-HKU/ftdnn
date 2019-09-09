@@ -85,6 +85,8 @@ def res_score_conv(sol, perf, hw_conf, workload, dram_rd_bw=20, dram_wr_bw=20, r
     # trans the list to ndarry for sorting
     score = np.array(score)
     # pickup the Top-K
+    if len(sol)==0:
+        return [[], [], []]
     remain_len = min(remain_len, len(sol))
     opt_avg_idx = score[:,0].argsort()[::-1][:remain_len]
     opt_exe_idx = score[:, 1].argsort()[::-1][:remain_len]

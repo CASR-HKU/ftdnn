@@ -3,3 +3,4 @@ sim/.idea/
 sim/__pycache__/
 .DS_Store
 *.pkl
+sim/data

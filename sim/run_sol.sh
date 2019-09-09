@@ -31,7 +31,7 @@ do
         # obtain the workload from csv
         workload=`echo $line | awk -F ',' '{ for(idx=3;idx<10;idx++) print  " " $idx }'`
         # check the status of CPU and memory (vmstat measured for each 2 seconds)
-        while [ `vmstat 2 2 | awk 'NR==4{print $13}'` -gt 90 ] || [ $((`free -m | awk '/Mem/{print $3}'`)) -gt 150000 ] || [ `ps -A | grep python | awk 'END{ print NR }'` -gt 15 ]; do
+        while [ `vmstat 2 2 | awk 'NR==4{print $13}'` -gt 90 ] || [ $((`free -m | awk '/Mem/{print $3}'`)) -gt 100000 ] || [ `ps -A | grep python | awk 'END{ print NR }'` -gt 8 ]; do
         # while [ `ps -A | grep python | awk 'END{ print NR }'` -gt 10 ]; do
             echo "[wait] CPU:" `vmstat 2 2 | awk 'NR==4{print $13}'` "Memory:" $((`free -m | awk '/Mem/{print $3}'`))
             sleep 10
