@@ -26,16 +26,11 @@ for item_hw in fh_hw_config:
     for item_workload in fh_workload_config:
         if item_workload[0] == "IDX":
             continue
-        fname_sol = "./data/GoogLeNet/sol_" + "_".join(str(elem) for elem in item_hw[1:]) + "_" + "_".join(str(elem) for elem in item_workload[2:9]) + ".pkl"
+        fname_sol = "/home/share/ftdl/data/GoogLeNet/sol_" + "_".join(str(elem) for elem in item_hw[1:]) + "_" + "_".join(str(elem) for elem in item_workload[2:9]) + ".pkl"
         # actually there is no missing files: the layer size is the same
         if (not os.path.exists(fname_sol)):
             print("Missing,hw:"+str(item_hw)+"workload:"+str(item_workload))
         with open(fname_sol, 'rb') as sol_file:
             [opt_sol, opt_perf, opt_score, hw_conf, workload] = pickle.load(sol_file)
         sol_file.close()
-
-
-
-
-
     file_workload_config.close()
