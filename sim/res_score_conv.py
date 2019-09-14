@@ -27,7 +27,7 @@ import numpy as np
 # }
 
 
-def res_score_conv(sol, perf, hw_conf, workload, dram_rd_bw=5, dram_wr_bw=5, remain_len=5000, w_exe=1, w_bw=1, w_wbram=1):
+def res_score_conv(sol, perf, hw_conf, workload, dram_rd_bw=20, dram_wr_bw=20, remain_len=5000, w_exe=1, w_bw=1, w_wbram=1):
 
     # theoretical number
     n_op = workload['M']*workload['N']*workload['W']*workload['H']*workload['I']*workload['J']
