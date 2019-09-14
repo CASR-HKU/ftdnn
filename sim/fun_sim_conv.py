@@ -101,7 +101,7 @@ if __name__ == '__main__':
                                 ## ACT BUF REQUIREMENT
                                 tmp1 = int((abs(ti - workload['STRIDE']) + ti - workload['STRIDE'])/2)
                                 tmp2 = int((abs(tj - workload['STRIDE']) + tj - workload['STRIDE']) / 2)
-                                act_buf = (ti * tw - tmp1 * (tw-1)) * (tj * th - tmp2 * (th-1))
+                                act_buf = (ti * tw - tmp1 * (tw-1)) * (tj * th - tmp2 * (th-1)) * tn  # miss `tn` before
                                 if (act_buf>hw_conf['N_ACT']):
                                     continue
                                 ##CONST4:
