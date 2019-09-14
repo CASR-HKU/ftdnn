@@ -32,5 +32,8 @@ for item_hw in fh_hw_config:
             print("Missing,hw:"+str(item_hw)+"workload:"+str(item_workload))
         with open(fname_sol, 'rb') as sol_file:
             [opt_sol, opt_perf, opt_score, hw_conf, workload] = pickle.load(sol_file)
+
+            # FIXME： Draw Diagram HERE
+
         sol_file.close()
     file_workload_config.close()

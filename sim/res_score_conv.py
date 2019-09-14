@@ -27,7 +27,7 @@ import numpy as np
 # }
 
 
-def res_score_conv(sol, perf, hw_conf, workload, dram_rd_bw=20, dram_wr_bw=20, remain_len=5000, w_exe=1, w_bw=1, w_wbram=1):
+def res_score_conv(sol, perf, hw_conf, workload, dram_rd_bw=5, dram_wr_bw=5, remain_len=5000, w_exe=1, w_bw=1, w_wbram=1):
 
     # theoretical number
     n_op = workload['M']*workload['N']*workload['W']*workload['H']*workload['I']*workload['J']
@@ -74,7 +74,7 @@ def res_score_conv(sol, perf, hw_conf, workload, dram_rd_bw=20, dram_wr_bw=20, r
         score_exe = theo_time / real_time
         score_bw = (th_dram_rd + th_dram_wr) / (dram_rd_bw + dram_wr_bw)
         score_wram = theo_w_consumption / w_ram_consump
-        score_avg = score_exe*w_exe + score_bw*w_bw + score_wram*w_wbram
+        score_avg = score_exe*w_exe + score_wram*w_wbram
 
         # record the overall score and other items
         score.append((score_avg, score_exe, score_bw, score_wram, ratio_w_consumption, ratio_time_comp, ratio_act_rd, ratio_psum_wr, real_time, bound_item, th_comp, th_bus_act_rd, th_bus_psum_wr, th_dram_rd, th_dram_wr))
