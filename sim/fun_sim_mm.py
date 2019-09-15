@@ -31,9 +31,9 @@ hw_conf = {
 }
 
 workload = {
-    'M': args.hw_conf[0],
-    'N': args.hw_conf[1],
-    'P': args.hw_conf[2],
+    'M': args.workload[0],
+    'N': args.workload[1],
+    'P': args.workload[2],
 }
 
 dump_name = './data/' +  str(args.model_name[0]) + '/sol_' + str(hw_conf['D1']) + '_' + str(hw_conf['D2']) + '_' + str(hw_conf['D3']) + '_' + str(hw_conf['N_ACT']) + '_' + str(hw_conf['N_W']) + '_' + str(hw_conf['N_PSUM']) + '_' + str(workload['M']) + '_' + str(workload['N']) + '_' + str(workload['P'])  + '.pkl'

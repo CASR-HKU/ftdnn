@@ -4,3 +4,4 @@ sim/__pycache__/
 .DS_Store
 *.pkl
 sim/data
+*.bk
