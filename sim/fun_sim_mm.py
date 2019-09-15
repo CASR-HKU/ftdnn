@@ -41,7 +41,7 @@ dump_name = './data/' +  str(args.model_name[0]) + '/sol_' + str(hw_conf['D1']) 
 
 if __name__ == '__main__':
 
-    # if (not os.path.exists(dump_name)):
+    if (not os.path.exists(dump_name)):
 
         # generate all possible `spatial partition` combinations
         sp_comb = []
@@ -134,9 +134,9 @@ if __name__ == '__main__':
         del opt_sol
         del opt_perf
         del opt_score
-    #
-    # else:
-    #     print("[File exist: ]"+dump_name)
+
+    else:
+        print("[File exist: ]"+dump_name)
 
 
 
