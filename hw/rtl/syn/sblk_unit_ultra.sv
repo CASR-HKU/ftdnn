@@ -20,6 +20,8 @@ module sblk_unit(/*AUTOARG*/
    parameter WID_PSUMADDR = 9;
    parameter PSUM_SPLIT_START_POS = 0;
 
+   localparam ACT_WR_DELAY_FACTOR = 8;
+
    input wire clk_h, clk_l;
    input wire rst_n;
    
@@ -46,14 +48,28 @@ module sblk_unit(/*AUTOARG*/
    wire [N_TILE*48-1:0]          psum;  // psum output of each stile
 
    // dealy of act_in
-   reg [2*WID_ACT-1:0]           act_wr_data;
-   always_ff @(posedge clk_l or negedge rst_n) begin : proc_act_wr_data
+   reg [2*WID_ACT-1:0] act_wr_data_d[N_TILE/ACT_WR_DELAY_FACTOR];
+   reg [N_TILE-1:0] act_wr_en_d[N_TILE/ACT_WR_DELAY_FACTOR];
+   reg [WID_ACTADDR-2:0] act_wr_addr_hbit_d[N_TILE/ACT_WR_DELAY_FACTOR];
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_act_wr_data_d
       if(~rst_n) begin
-         act_wr_data <= 0;
+         for (int ii=0; ii<N_TILE/ACT_WR_DELAY_FACTOR; ii=ii+1) begin
+            act_wr_data_d[ii] <= 0;
+            act_wr_en_d[ii] <= 0;
+            act_wr_addr_hbit_d[ii] <= 0;
+         end
       end else begin
-         act_wr_data <= act_data_in;
+         act_wr_data_d[0] <= act_data_in;
+         act_wr_en_d[0] <= act_wr_en;
+         act_wr_addr_hbit_d[0] <= act_wr_addr_hbit;
+         for (int ii=1; ii<N_TILE/ACT_WR_DELAY_FACTOR; ii=ii+1) begin
+            act_wr_data_d[ii] <= act_wr_data_d[ii-1];
+            act_wr_en_d[ii] <= act_wr_en_d[ii-1];
+            act_wr_addr_hbit_d[ii] <= act_wr_addr_hbit_d[ii-1];
+         end
       end
    end
+
 
    // clkh->clkl connection, add two delay stages for timing
    reg [WID_PSUM-1:0]     psum_wr_d;
@@ -146,9 +162,9 @@ module sblk_unit(/*AUTOARG*/
                  .rst_n(rst_n),
                  .w_wr_en(1'b0),
                  .w_rd_addr(w_rd_addr_d[1]),
-                 .act_wr_data(act_wr_data),
-                 .act_wr_en(act_wr_en[0]),
-                 .act_wr_addr_hbit(act_wr_addr_hbit),
+                 .act_wr_data(act_wr_data_d[0]),
+                 .act_wr_en(act_wr_en_d[0][0]),
+                 .act_wr_addr_hbit(act_wr_addr_hbit_d[0]),
                  .act_rd_addr(act_rd_addr_d[4]),
                  .p_casout(psum[0*48+:48]),
                  .p_sumin({{(48-PSUM_SPLIT_START_POS-WID_PSUM){1'b0}}, psum_stile_in_d, {PSUM_SPLIT_START_POS{1'b0}}})
@@ -164,9 +180,9 @@ module sblk_unit(/*AUTOARG*/
                           .rst_n(rst_n),
                           .w_wr_en(1'b0),
                           .w_rd_addr(w_rd_addr_d[ii+1]),
-                          .act_wr_data(act_wr_data),
-                          .act_wr_en(act_wr_en[ii]),
-                          .act_wr_addr_hbit(act_wr_addr_hbit),
+                          .act_wr_data(act_wr_data_d[ii/ACT_WR_DELAY_FACTOR]),
+                          .act_wr_en(act_wr_en_d[ii/ACT_WR_DELAY_FACTOR][ii]),
+                          .act_wr_addr_hbit(act_wr_addr_hbit_d[ii/ACT_WR_DELAY_FACTOR]),
                           .act_rd_addr(act_rd_addr_d[ii+4]),
                           .p_casout(psum[ii*48+:48]),
                           .p_casin(psum[(ii-1)*48+:48])
@@ -182,13 +198,15 @@ module sblk_unit(/*AUTOARG*/
                  .rst_n(rst_n),
                  .w_wr_en(1'b0),
                  .w_rd_addr(w_rd_addr_d[N_TILE]),
-                 .act_wr_data(act_wr_data),
-                 .act_wr_en(act_wr_en[N_TILE-1]),
-                 .act_wr_addr_hbit(act_wr_addr_hbit),
+                 .act_wr_data(act_wr_data_d[(N_TILE-1)/ACT_WR_DELAY_FACTOR]),
+                 .act_wr_en(act_wr_en_d[(N_TILE-1)/ACT_WR_DELAY_FACTOR][N_TILE-1]),
+                 .act_wr_addr_hbit(act_wr_addr_hbit_d[(N_TILE-1)/ACT_WR_DELAY_FACTOR]),
                  .act_rd_addr(act_rd_addr_d[N_TILE+3]),
                  .p_out(psum[(N_TILE-1)*48+:48]),
                  .p_casin(psum[(N_TILE-1-1)*48+:48])
                  );
+
+
 
    // instante partial sum buffer
    RAMB36E2 #(

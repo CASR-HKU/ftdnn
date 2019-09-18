@@ -11,8 +11,8 @@ module sblk_row(/*AUTOARG*/
 
    // number of supertile inside the superblock
    parameter N_ROW = 7;
-   parameter N_COLUMN = 12;
-   parameter N_TILE = 10;
+   parameter N_COLUMN = 8;
+   parameter N_TILE = 20;
    parameter WID_N_TILE = $clog2(N_TILE);
    parameter WID_W = 16;
    parameter WID_WADDR = 10;

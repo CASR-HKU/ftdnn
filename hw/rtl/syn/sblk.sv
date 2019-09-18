@@ -129,8 +129,8 @@ module sblk(/*AUTOARG*/
             psum_wr_en_d[0] <= psum_wr_en;
             psum_rd_addr_d[0] <= psum_rd_addr;
             for (int jj=1; jj<N_COLUMN-1; jj=jj+1) begin
-               act_data_in_d[jj] <= act_data_in_d[jj];
-               act_wr_en_d[jj] <= act_wr_en_d[jj];
+               act_data_in_d[jj] <= act_data_in_d[jj-1];
+               act_wr_en_d[jj] <= act_wr_en_d[jj-1];
                act_wr_addr_hbit_d[jj] <= act_wr_addr_hbit_d[jj-1];
                act_rd_addr_hbit_d[jj] <= act_rd_addr_hbit_d[jj-1];
                w_rd_addr_d[jj] <= w_rd_addr_d[jj-1];

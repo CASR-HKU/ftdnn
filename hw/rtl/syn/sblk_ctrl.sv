@@ -167,20 +167,38 @@ module sblk_ctrl(/*AUTOARG*/
       end
    end
 
+
+   // FIXME: temp adust for better timing
+   reg [WID_INST_LN+WID_INST_TN+WID_INST_TM-1:0] w_rd_addr_tmp0;
+   reg [WID_INST_TM+WID_INST_TN:0] w_rd_addr_tmp1;
    always_ff @(posedge clk_l or negedge rst_n) begin : proc_w_rd_addr
       if(~rst_n) begin
          w_rd_addr <= 0;
+         w_rd_addr_tmp0 <= 0;
+         w_rd_addr_tmp1 <= 0;
       end else begin
-         w_rd_addr <= cnt_tn + cnt_tm * n_tn + cnt_ln * n_tn * n_tm;
+         // w_rd_addr <= cnt_tn + cnt_tm * n_tn + cnt_ln * n_tn * n_tm;
+         w_rd_addr_tmp0 <= cnt_ln * n_tn * n_tm;
+         w_rd_addr_tmp1 <= cnt_tn + cnt_tm * n_tn;
+         w_rd_addr <= w_rd_addr_tmp0 + w_rd_addr_tmp1;
       end
    end
 
+
+   // FIXME: temp adust for better timing
+   reg [WID_INST_LP+WID_INST_TP+WID_INST_TM-1:0] psum_rd_addr_tmp0;
+   reg [WID_INST_TM+WID_INST_TP:0] psum_rd_addr_tmp1;
    // psum_wr_addr is generated in concurrent with psum_rd_addr, with the same value. Delay for writing after DSP-chain propogation.
    always_ff @(posedge clk_l or negedge rst_n) begin : proc_psum_rd_addr
       if(~rst_n) begin
          psum_rd_addr <= 0;
+         psum_rd_addr_tmp0 <= 0;
+         psum_rd_addr_tmp1 <= 0;
       end else begin
-         psum_rd_addr <= cnt_tm + cnt_tp * n_tm + cnt_lp * n_tp * n_tm;
+         // psum_rd_addr <= cnt_tm + cnt_tp * n_tm + cnt_lp * n_tp * n_tm;
+         psum_rd_addr_tmp0 <= cnt_lp * n_tp * n_tm;
+         psum_rd_addr_tmp1 <= cnt_tm + cnt_tp * n_tm;
+         psum_rd_addr <= psum_rd_addr_tmp0 + psum_rd_addr_tmp1;
       end
    end
 
