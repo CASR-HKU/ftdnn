@@ -1,4 +1,7 @@
-hw/impl
+# exclude the impl folder but with *.tcl
+hw/impl/*
+!hw/impl/*.tcl
+
 sim/.idea/
 sim/__pycache__/
 .DS_Store
