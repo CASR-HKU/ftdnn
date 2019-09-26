@@ -1,1 +1,2 @@
-hw/impl
+hw/impl/*
+!hw/impl/*.tcl

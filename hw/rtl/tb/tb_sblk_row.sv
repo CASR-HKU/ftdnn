@@ -1,7 +1,7 @@
-// unit test for sblk control
+// unit test for sblk row
 `timescale 1ns / 1ns
 
-module tb_sblk;
+module tb_sblk_row;
 
    parameter CLKL_PERIOD = 4;
    parameter CLKH_PERIOD = CLKL_PERIOD/2;
@@ -113,7 +113,7 @@ module tb_sblk;
       $finish;
    end
 
-   sblk u_sblk(
+   sblk_row u_sblk_row(
                .clk_l(clk_l),
                .clk_h(clk_h),
                .rst_n(rst_n),

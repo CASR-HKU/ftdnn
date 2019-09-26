@@ -323,7 +323,8 @@ module sblk_ctrl(/*AUTOARG*/
          status_sblk <= 0;
       end else begin
          // FIXME
-         status_sblk <= inst_en_d? 1 : ((inst_finish_d[WB_DELAY_CYCLE] & ~comp_flag_d[WB_DELAY_CYCLE-1])? 0 : status_sblk);
+         // status_sblk <= inst_en_d? 1 : ((inst_finish_d[WB_DELAY_CYCLE] & ~comp_flag_d[WB_DELAY_CYCLE-1])? 0 : status_sblk);
+         status_sblk <= inst_en_d? 1 : ((inst_finish_d[WB_DELAY_CYCLE-1] & ~comp_flag_d[WB_DELAY_CYCLE-1])? 0 : status_sblk); // --rbshi: update for for `hw_refine`
       end
    end   
 
