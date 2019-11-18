@@ -307,7 +307,7 @@ module stile(/*AUTOARG*/
       .INIT_A(18'h00000),
       .INIT_B(18'h00000),
       // Initialization File: RAM initialization file
-      .INIT_FILE("NONE"),
+      .INIT_FILE("init_bram.mem"),
       // Programmable Inversion Attributes: Specifies the use of the built-in programmable inversion
       .IS_CLKARDCLK_INVERTED(1'b0),
       .IS_CLKBWRCLK_INVERTED(1'b0),

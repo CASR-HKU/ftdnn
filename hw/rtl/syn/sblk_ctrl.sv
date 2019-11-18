@@ -163,7 +163,7 @@ module sblk_ctrl(/*AUTOARG*/
       if(~rst_n) begin
          act_rd_addr_hbit <= 0;
       end else begin
-         act_rd_addr_hbit <= (toggle_compute << (WID_ACTADDR-2)) + cnt_tp + cnt_tn * n_tp;
+         act_rd_addr_hbit <= (toggle_compute << (WID_ACTADDR-2)) + cnt_tn * n_tp + cnt_tp;
       end
    end
 
@@ -171,7 +171,7 @@ module sblk_ctrl(/*AUTOARG*/
       if(~rst_n) begin
          w_rd_addr <= 0;
       end else begin
-         w_rd_addr <= cnt_tn + cnt_tm * n_tn + cnt_ln * n_tn * n_tm;
+         w_rd_addr <= cnt_ln * n_tm * n_tp + cnt_tm * n_tp + cnt_tp;
       end
    end
 
@@ -180,7 +180,7 @@ module sblk_ctrl(/*AUTOARG*/
       if(~rst_n) begin
          psum_rd_addr <= 0;
       end else begin
-         psum_rd_addr <= cnt_tm + cnt_tp * n_tm + cnt_lp * n_tp * n_tm;
+         psum_rd_addr <= cnt_lp * n_tn * n_tm + cnt_tn * n_tm + cnt_tm;
       end
    end
 

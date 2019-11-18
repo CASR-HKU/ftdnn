@@ -71,7 +71,7 @@ module tb_sblk_row;
 
    // set instruction
    initial begin
-      n_tp = 2; n_tm = 6; n_tn = 2; n_ln = 2; n_lp = 2;
+      n_tp = 4; n_tm = 6; n_tn = 3; n_ln = 2; n_lp = 2;
       inst_data = {n_lp, n_ln, n_tp, n_tm, n_tn};
       inst_en = 0;
       repeat(40) @(negedge clk_l);
@@ -93,13 +93,21 @@ module tb_sblk_row;
       act_data_in_vld = 0;
       forever begin
          if (act_data_in_req) begin
-            for (ii=0; ii<2*n_tn*n_tp*N_TILE; ii=ii+2) begin
-               @(negedge clk_l);
-               act_data_in_vld = 1;
-               //FIXME: couple two act data to a wider one
-               act_data_in[0+:WID_ACT] = ii;
-               act_data_in[WID_ACT+:WID_ACT] = ii+1;
+            for (int cnt_n=0; cnt_n<n_tn; cnt_n+=1) begin
+               for (int cnt_p=0; cnt_p<n_tp; cnt_p+=1) begin
+                     @(negedge clk_l);
+                     act_data_in_vld = 1;
+                     act_data_in[0+:WID_ACT] = {4'h0, cnt_n[3:0], 2'h0, cnt_p[3:2], 2'h0, cnt_p[1:0]};
+                     act_data_in[WID_ACT+:WID_ACT] = {4'h1, cnt_n[3:0], 2'h0, cnt_p[3:2], 2'h0, cnt_p[1:0]};
+               end
             end
+            //for (ii=0; ii<2*n_tn*n_tp*N_TILE; ii=ii+2) begin
+            //   @(negedge clk_l);
+            //   act_data_in_vld = 1;
+            //   //FIXME: couple two act data to a wider one
+            //   act_data_in[0+:WID_ACT] = ii;
+            //   act_data_in[WID_ACT+:WID_ACT] = ii+1;
+            //end
          end else begin
             @(negedge clk_l);
             act_data_in_vld = 0;
