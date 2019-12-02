@@ -1,16 +1,16 @@
 # Begin_DVE_Session_Save_Info
 # DVE full session
-# Saved on Fri Nov 15 19:13:48 2019
+# Saved on Fri Nov 29 20:06:35 2019
 # Designs open: 1
 #   Sim: tb_sblk_row_simv
 # Toplevel windows open: 2
 # 	TopLevel.1
 # 	TopLevel.2
 #   Source.1: tb_sblk_row.u_sblk_row.u_sblk_ctrl
-#   Wave.1: 46 signals
+#   Wave.1: 50 signals
 #   Group count = 7
-#   Group Group1 signal count = 6
-#   Group SBLK 0 signal count = 16
+#   Group Group1 signal count = 3
+#   Group SBLK 0 signal count = 23
 #   Group TPE 0 signal count = 6
 #   Group TPE 1 signal count = 6
 #   Group TPE 2 signal count = 6
@@ -74,7 +74,7 @@ if {![gui_exist_window -window TopLevel.1]} {
 } else { 
     set TopLevel.1 TopLevel.1
 }
-gui_show_window -window ${TopLevel.1} -show_state maximized -rect {{0 51} {1919 1054}}
+gui_show_window -window ${TopLevel.1} -show_state maximized -rect {{2 51} {1921 1054}}
 
 # ToolBar settings
 gui_set_toolbar_attributes -toolbar {TimeOperations} -dock_state top
@@ -121,28 +121,28 @@ gui_show_toolbar -toolbar {Testbench}
 # End ToolBar settings
 
 # Docked window settings
-set HSPane.1 [gui_create_window -type HSPane -parent ${TopLevel.1} -dock_state left -dock_on_new_line true -dock_extent 258]
+set HSPane.1 [gui_create_window -type HSPane -parent ${TopLevel.1} -dock_state left -dock_on_new_line true -dock_extent 249]
 catch { set Hier.1 [gui_share_window -id ${HSPane.1} -type Hier] }
-gui_set_window_pref_key -window ${HSPane.1} -key dock_width -value_type integer -value 258
+gui_set_window_pref_key -window ${HSPane.1} -key dock_width -value_type integer -value 249
 gui_set_window_pref_key -window ${HSPane.1} -key dock_height -value_type integer -value -1
 gui_set_window_pref_key -window ${HSPane.1} -key dock_offset -value_type integer -value 0
-gui_update_layout -id ${HSPane.1} {{left 0} {top 0} {width 257} {height 718} {dock_state left} {dock_on_new_line true} {child_hier_colhier 186} {child_hier_coltype 100} {child_hier_colpd 0} {child_hier_col1 0} {child_hier_col2 1} {child_hier_col3 -1}}
-set DLPane.1 [gui_create_window -type DLPane -parent ${TopLevel.1} -dock_state left -dock_on_new_line true -dock_extent 488]
+gui_update_layout -id ${HSPane.1} {{left 0} {top 0} {width 248} {height 727} {dock_state left} {dock_on_new_line true} {child_hier_colhier 186} {child_hier_coltype 100} {child_hier_colpd 0} {child_hier_col1 0} {child_hier_col2 1} {child_hier_col3 -1}}
+set DLPane.1 [gui_create_window -type DLPane -parent ${TopLevel.1} -dock_state left -dock_on_new_line true -dock_extent 479]
 catch { set Data.1 [gui_share_window -id ${DLPane.1} -type Data] }
-gui_set_window_pref_key -window ${DLPane.1} -key dock_width -value_type integer -value 488
+gui_set_window_pref_key -window ${DLPane.1} -key dock_width -value_type integer -value 479
 gui_set_window_pref_key -window ${DLPane.1} -key dock_height -value_type integer -value 725
 gui_set_window_pref_key -window ${DLPane.1} -key dock_offset -value_type integer -value 0
-gui_update_layout -id ${DLPane.1} {{left 0} {top 0} {width 487} {height 718} {dock_state left} {dock_on_new_line true} {child_data_colvariable 267} {child_data_colvalue 103} {child_data_coltype 107} {child_data_col1 0} {child_data_col2 1} {child_data_col3 2}}
-set Console.1 [gui_create_window -type Console -parent ${TopLevel.1} -dock_state bottom -dock_on_new_line true -dock_extent 179]
+gui_update_layout -id ${DLPane.1} {{left 0} {top 0} {width 478} {height 727} {dock_state left} {dock_on_new_line true} {child_data_colvariable 267} {child_data_colvalue 103} {child_data_coltype 107} {child_data_col1 0} {child_data_col2 1} {child_data_col3 2}}
+set Console.1 [gui_create_window -type Console -parent ${TopLevel.1} -dock_state bottom -dock_on_new_line true -dock_extent 170]
 gui_set_window_pref_key -window ${Console.1} -key dock_width -value_type integer -value -1
-gui_set_window_pref_key -window ${Console.1} -key dock_height -value_type integer -value 179
+gui_set_window_pref_key -window ${Console.1} -key dock_height -value_type integer -value 170
 gui_set_window_pref_key -window ${Console.1} -key dock_offset -value_type integer -value 0
-gui_update_layout -id ${Console.1} {{left 0} {top 0} {width 295} {height 178} {dock_state bottom} {dock_on_new_line true}}
-set DriverLoad.1 [gui_create_window -type DriverLoad -parent ${TopLevel.1} -dock_state bottom -dock_on_new_line false -dock_extent 179]
+gui_update_layout -id ${Console.1} {{left 0} {top 0} {width 295} {height 169} {dock_state bottom} {dock_on_new_line true}}
+set DriverLoad.1 [gui_create_window -type DriverLoad -parent ${TopLevel.1} -dock_state bottom -dock_on_new_line false -dock_extent 170]
 gui_set_window_pref_key -window ${DriverLoad.1} -key dock_width -value_type integer -value 150
-gui_set_window_pref_key -window ${DriverLoad.1} -key dock_height -value_type integer -value 179
+gui_set_window_pref_key -window ${DriverLoad.1} -key dock_height -value_type integer -value 170
 gui_set_window_pref_key -window ${DriverLoad.1} -key dock_offset -value_type integer -value 0
-gui_update_layout -id ${DriverLoad.1} {{left 0} {top 0} {width 1623} {height 178} {dock_state bottom} {dock_on_new_line false}}
+gui_update_layout -id ${DriverLoad.1} {{left 0} {top 0} {width 1623} {height 169} {dock_state bottom} {dock_on_new_line false}}
 #### Start - Readjusting docked view's offset / size
 set dockAreaList { top left right bottom }
 foreach dockArea $dockAreaList {
@@ -179,7 +179,7 @@ if {![gui_exist_window -window TopLevel.2]} {
 } else { 
     set TopLevel.2 TopLevel.2
 }
-gui_show_window -window ${TopLevel.2} -show_state maximized -rect {{0 51} {1919 1054}}
+gui_show_window -window ${TopLevel.2} -show_state maximized -rect {{16 51} {1935 1054}}
 
 # ToolBar settings
 gui_set_toolbar_attributes -toolbar {TimeOperations} -dock_state top
@@ -231,7 +231,7 @@ gui_sync_global -id ${TopLevel.2} -option true
 # MDI window settings
 set Wave.1 [gui_create_window -type {Wave}  -parent ${TopLevel.2}]
 gui_show_window -window ${Wave.1} -show_state maximized
-gui_update_layout -id ${Wave.1} {{show_state maximized} {dock_state undocked} {dock_on_new_line false} {child_wave_left 454} {child_wave_right 1460} {child_wave_colname 200} {child_wave_colvalue 250} {child_wave_col1 0} {child_wave_col2 1}}
+gui_update_layout -id ${Wave.1} {{show_state maximized} {dock_state undocked} {dock_on_new_line false} {child_wave_left 551} {child_wave_right 1363} {child_wave_colname 245} {child_wave_colvalue 302} {child_wave_col1 0} {child_wave_col2 1}}
 
 # End MDI window settings
 
@@ -261,7 +261,7 @@ gui_sim_run Ucli -exe tb_sblk_row_simv -args {-ucligui -licqueue -l simulate.log
 }
 if { ![gui_sim_state -check active] } {error "Simulator did not start correctly" error}
 gui_set_precision 1ps
-gui_set_time_units 1ps
+gui_set_time_units 1ns
 #</Database>
 
 # DVE Global setting session: 
@@ -293,45 +293,48 @@ gui_compare_set_option -name {Sim:tb_sblk_row.u_sblk_row.u_sblk_unit_start.psum_
 
 # Global: Signal Groups
 gui_load_child_values {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[1].u_mid_stile}
+gui_load_child_values {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_start_stile}
 gui_load_child_values {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[2].u_mid_stile}
+gui_load_child_values {tb_sblk_row}
 gui_load_child_values {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_end_stile}
+gui_load_child_values {tb_sblk_row.u_sblk_row.u_sblk_unit_start}
 
 
 set _session_group_1 Group1
 gui_sg_create "$_session_group_1"
 set Group1 "$_session_group_1"
 
-gui_sg_addsignal -group "$_session_group_1" { tb_sblk_row.act_data_in_req tb_sblk_row.status_sblk tb_sblk_row.clk_l tb_sblk_row.clk_h tb_sblk_row.rst_n tb_sblk_row.u_sblk_row.psum_rd_data }
+gui_sg_addsignal -group "$_session_group_1" { tb_sblk_row.clk_l tb_sblk_row.clk_h tb_sblk_row.rst_n }
 
 set _session_group_2 {SBLK 0}
 gui_sg_create "$_session_group_2"
 set {SBLK 0} "$_session_group_2"
 
-gui_sg_addsignal -group "$_session_group_2" { tb_sblk_row.u_sblk_row.u_sblk_unit_start.act_wr_en tb_sblk_row.u_sblk_row.u_sblk_unit_start.act_wr_addr_hbit tb_sblk_row.u_sblk_row.u_sblk_unit_start.act_data_in tb_sblk_row.u_sblk_row.u_sblk_unit_start.act_rd_addr_hbit tb_sblk_row.u_sblk_row.u_sblk_unit_start.w_rd_addr tb_sblk_row.u_sblk_row.u_sblk_ctrl.comp_flag tb_sblk_row.u_sblk_row.u_sblk_ctrl.cnt_tp tb_sblk_row.u_sblk_row.u_sblk_ctrl.cnt_tm tb_sblk_row.u_sblk_row.u_sblk_ctrl.cnt_tn tb_sblk_row.u_sblk_row.u_sblk_unit_start.psum_wr_addr tb_sblk_row.u_sblk_row.u_sblk_unit_start.psum_wr_en tb_sblk_row.u_sblk_row.u_sblk_unit_start.psum tb_sblk_row.u_sblk_row.u_sblk_unit_start.psum_wr_data tb_sblk_row.u_sblk_row.u_sblk_unit_start.psum_wr_d tb_sblk_row.u_sblk_row.u_sblk_unit_start.psum_rd_addr tb_sblk_row.u_sblk_row.u_sblk_unit_start.psum_rd_data }
+gui_sg_addsignal -group "$_session_group_2" { tb_sblk_row.u_sblk_row.u_sblk_unit_start.act_wr_en tb_sblk_row.u_sblk_row.u_sblk_unit_start.act_wr_addr_hbit tb_sblk_row.u_sblk_row.u_sblk_unit_start.act_data_in tb_sblk_row.u_sblk_row.u_sblk_unit_start.w_rd_addr tb_sblk_row.act_data_in_req tb_sblk_row.status_sblk tb_sblk_row.u_sblk_row.u_sblk_ctrl.inst_en tb_sblk_row.u_sblk_row.u_sblk_ctrl.trip_finish tb_sblk_row.u_sblk_row.u_sblk_ctrl.inst_finish tb_sblk_row.u_sblk_row.u_sblk_ctrl.comp_flag tb_sblk_row.u_sblk_row.u_sblk_ctrl.cnt_tp tb_sblk_row.u_sblk_row.u_sblk_ctrl.cnt_tm tb_sblk_row.u_sblk_row.u_sblk_ctrl.cnt_tn tb_sblk_row.u_sblk_row.u_sblk_ctrl.cnt_ln tb_sblk_row.u_sblk_row.u_sblk_ctrl.cnt_lp tb_sblk_row.u_sblk_row.u_sblk_unit_start.psum_wr_addr tb_sblk_row.u_sblk_row.u_sblk_unit_start.psum_wr_en tb_sblk_row.u_sblk_row.u_sblk_unit_start.psum tb_sblk_row.u_sblk_row.u_sblk_unit_start.psum_wr_data tb_sblk_row.u_sblk_row.u_sblk_unit_start.psum_wr_d tb_sblk_row.u_sblk_row.u_sblk_unit_start.act_rd_addr_hbit tb_sblk_row.u_sblk_row.u_sblk_unit_start.psum_rd_addr tb_sblk_row.u_sblk_row.u_sblk_unit_start.psum_rd_data }
 
 set _session_group_3 {TPE 0}
 gui_sg_create "$_session_group_3"
 set {TPE 0} "$_session_group_3"
 
-gui_sg_addsignal -group "$_session_group_3" { tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_start_stile.w_rd_addr tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_start_stile.w_rd_data tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_start_stile.act_rd_addr tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_start_stile.act_rd_data_d tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_start_stile.p_sumin tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_start_stile.p_casout }
+gui_sg_addsignal -group "$_session_group_3" { tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_start_stile.w_rd_addr tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_start_stile.act_rd_addr tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_start_stile.w_rd_data_d tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_start_stile.act_rd_data_d tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_start_stile.p_sumin tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_start_stile.p_casout }
 
 set _session_group_4 {TPE 1}
 gui_sg_create "$_session_group_4"
 set {TPE 1} "$_session_group_4"
 
-gui_sg_addsignal -group "$_session_group_4" { {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[1].u_mid_stile.w_rd_addr} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[1].u_mid_stile.w_rd_data} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[1].u_mid_stile.act_rd_addr} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[1].u_mid_stile.act_rd_data_d} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[1].u_mid_stile.p_casin} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[1].u_mid_stile.p_casout} }
+gui_sg_addsignal -group "$_session_group_4" { {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[1].u_mid_stile.w_rd_addr} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[1].u_mid_stile.act_rd_addr} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[1].u_mid_stile.w_rd_data_d} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[1].u_mid_stile.act_rd_data_d} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[1].u_mid_stile.p_casin} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[1].u_mid_stile.p_casout} }
 
 set _session_group_5 {TPE 2}
 gui_sg_create "$_session_group_5"
 set {TPE 2} "$_session_group_5"
 
-gui_sg_addsignal -group "$_session_group_5" { {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[2].u_mid_stile.w_rd_addr} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[2].u_mid_stile.w_rd_data} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[2].u_mid_stile.act_rd_addr} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[2].u_mid_stile.act_rd_data_d} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[2].u_mid_stile.p_casin} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[2].u_mid_stile.p_casout} }
+gui_sg_addsignal -group "$_session_group_5" { {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[2].u_mid_stile.w_rd_addr} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[2].u_mid_stile.act_rd_addr} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[2].u_mid_stile.w_rd_data_d} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[2].u_mid_stile.act_rd_data_d} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[2].u_mid_stile.p_casin} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[2].u_mid_stile.p_casout} }
 
 set _session_group_6 {TPE 3}
 gui_sg_create "$_session_group_6"
 set {TPE 3} "$_session_group_6"
 
-gui_sg_addsignal -group "$_session_group_6" { tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_end_stile.w_rd_addr tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_end_stile.w_rd_data tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_end_stile.act_rd_addr tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_end_stile.act_rd_data_d tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_end_stile.p_casin tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_end_stile.p_out }
+gui_sg_addsignal -group "$_session_group_6" { tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_end_stile.w_rd_addr tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_end_stile.act_rd_addr tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_end_stile.w_rd_data_d tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_end_stile.act_rd_data_d tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_end_stile.p_casin tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_end_stile.p_out }
 
 set _session_group_7 Group11
 gui_sg_create "$_session_group_7"
@@ -346,7 +349,7 @@ gui_change_stack_mode -mode list
 # Post database loading setting...
 
 # Restore C1 time
-gui_set_time -C1_only 308717
+gui_set_time -C1_only 384
 
 
 
@@ -373,38 +376,37 @@ gui_hier_list_init -id ${Hier.1}
 gui_change_design -id ${Hier.1} -design Sim
 catch {gui_list_expand -id ${Hier.1} tb_sblk_row}
 catch {gui_list_expand -id ${Hier.1} tb_sblk_row.u_sblk_row}
-catch {gui_list_select -id ${Hier.1} {tb_sblk_row.u_sblk_row.u_sblk_unit_start}}
+catch {gui_list_select -id ${Hier.1} {tb_sblk_row.u_sblk_row.u_sblk_ctrl}}
 gui_view_scroll -id ${Hier.1} -vertical -set 0
 gui_view_scroll -id ${Hier.1} -horizontal -set 0
 
 # Data 'Data.1'
 gui_list_set_filter -id ${Data.1} -list { {Buffer 1} {Input 1} {Others 1} {Linkage 1} {Output 1} {LowPower 1} {Parameter 1} {All 1} {Aggregate 1} {LibBaseMember 1} {Event 1} {Assertion 1} {Constant 1} {Interface 1} {BaseMembers 1} {Signal 1} {$unit 1} {Inout 1} {Variable 1} }
 gui_list_set_filter -id ${Data.1} -text {*}
-gui_list_show_data -id ${Data.1} {tb_sblk_row.u_sblk_row.u_sblk_unit_start}
+gui_list_show_data -id ${Data.1} {tb_sblk_row.u_sblk_row.u_sblk_ctrl}
 gui_show_window -window ${Data.1}
-catch { gui_list_select -id ${Data.1} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.psum_wr_d }}
-gui_view_scroll -id ${Data.1} -vertical -set 0
+catch { gui_list_select -id ${Data.1} {tb_sblk_row.u_sblk_row.u_sblk_ctrl.n_ln }}
+gui_view_scroll -id ${Data.1} -vertical -set 240
 gui_view_scroll -id ${Data.1} -horizontal -set 0
 gui_view_scroll -id ${Hier.1} -vertical -set 0
 gui_view_scroll -id ${Hier.1} -horizontal -set 0
 
 # DriverLoad 'DriverLoad.1'
-gui_get_drivers -session -id ${DriverLoad.1} -signal {tb_sblk_row.u_sblk_row.u_sblk_unit_start.act_data_in[31:0]} -time 190000 -starttime 192000
-gui_get_drivers -session -id ${DriverLoad.1} -signal {tb_sblk_row.u_sblk_row.u_sblk_unit[1].u_sblk_unit.psum_rd_addr[8:0]} -time 6000 -starttime 180768
-gui_get_drivers -session -id ${DriverLoad.1} -signal {tb_sblk_row.u_sblk_row.u_sblk_unit_start.act_rd_addr_d[8:0][5:0]} -time 240102 -starttime 240102
-gui_get_drivers -session -id ${DriverLoad.1} -signal {tb_sblk_row.u_sblk_row.u_sblk_unit_start.act_rd_addr_hbit[4:0]} -time 6000 -starttime 240102
-gui_get_drivers -session -id ${DriverLoad.1} -signal {tb_sblk_row.u_sblk_row.u_sblk_ctrl.cnt_tp[1:0]} -time 6000 -starttime 240102
-gui_get_drivers -session -id ${DriverLoad.1} -signal tb_sblk_row.u_sblk_row.u_sblk_ctrl.comp_flag -time 240000 -starttime 240102
-gui_get_drivers -session -id ${DriverLoad.1} -signal {tb_sblk_row.u_sblk_row.u_sblk_unit_start.act_rd_addr_hbit[4:0]} -time 6000 -starttime 240000
-gui_get_drivers -session -id ${DriverLoad.1} -signal {tb_sblk_row.u_sblk_row.u_sblk_ctrl.cnt_tp[1:0]} -time 6000 -starttime 240000
-gui_get_drivers -session -id ${DriverLoad.1} -signal {tb_sblk_row.u_sblk_row.u_sblk_ctrl.n_tp[1:0]} -time 160000 -starttime 240000
-gui_get_drivers -session -id ${DriverLoad.1} -signal {tb_sblk_row.u_sblk_row.u_sblk_unit_start.psum_wr_addr[8:0]} -time 6000 -starttime 272000
+gui_get_drivers -session -id ${DriverLoad.1} -signal {tb_sblk_row.u_sblk_row.u_sblk_unit_start.act_data_in[31:0]} -time 190 -starttime 192
+gui_get_drivers -session -id ${DriverLoad.1} -signal {tb_sblk_row.u_sblk_row.u_sblk_unit[1].u_sblk_unit.psum_rd_addr[8:0]} -time 6 -starttime 180.768
+gui_get_drivers -session -id ${DriverLoad.1} -signal {tb_sblk_row.u_sblk_row.u_sblk_unit_start.act_rd_addr_hbit[4:0]} -time 6 -starttime 240.102
+gui_get_drivers -session -id ${DriverLoad.1} -signal {tb_sblk_row.u_sblk_row.u_sblk_ctrl.cnt_tp[1:0]} -time 6 -starttime 240.102
+gui_get_drivers -session -id ${DriverLoad.1} -signal tb_sblk_row.u_sblk_row.u_sblk_ctrl.comp_flag -time 240 -starttime 240.102
+gui_get_drivers -session -id ${DriverLoad.1} -signal {tb_sblk_row.u_sblk_row.u_sblk_unit_start.act_rd_addr_hbit[4:0]} -time 6 -starttime 240
+gui_get_drivers -session -id ${DriverLoad.1} -signal {tb_sblk_row.u_sblk_row.u_sblk_ctrl.cnt_tp[1:0]} -time 6 -starttime 240
+gui_get_drivers -session -id ${DriverLoad.1} -signal {tb_sblk_row.u_sblk_row.u_sblk_ctrl.n_tp[1:0]} -time 160 -starttime 240
+gui_get_drivers -session -id ${DriverLoad.1} -signal {tb_sblk_row.u_sblk_row.u_sblk_unit_start.psum_wr_addr[8:0]} -time 6 -starttime 272
 
 # Source 'Source.1'
 gui_src_value_annotate -id ${Source.1} -switch false
 gui_set_env TOGGLE::VALUEANNOTATE 0
 gui_open_source -id ${Source.1}  -replace -active tb_sblk_row.u_sblk_row.u_sblk_ctrl /home/yhding/code/ftdnn/hw/rtl/syn/sblk_ctrl.sv
-gui_view_scroll -id ${Source.1} -vertical -set 3616
+gui_view_scroll -id ${Source.1} -vertical -set 32
 gui_src_set_reusable -id ${Source.1}
 
 # View 'Wave.1'
@@ -415,14 +417,19 @@ set origWaveHeight [gui_get_pref_value -category Wave -key waveRowHeight]
 gui_list_set_height -id Wave -height 25
 set origGroupCreationState [gui_list_create_group_when_add -wave]
 gui_list_create_group_when_add -wave -disable
-gui_marker_create -id ${Wave.1} DSP0_DATA_Ready 288000
-gui_marker_create -id ${Wave.1} DSP1 290000
-gui_marker_create -id ${Wave.1} DSP2 292000
-gui_marker_create -id ${Wave.1} DSP3 294000
-gui_marker_create -id ${Wave.1} DSP3_OUT 300000
-gui_marker_select -id ${Wave.1} {  DSP2 }
+gui_marker_create -id ${Wave.1} DSP0 384
+gui_marker_create -id ${Wave.1} DSP1 386
+gui_marker_create -id ${Wave.1} DSP2 388
+gui_marker_create -id ${Wave.1} DSP3 390
+gui_marker_create -id ${Wave.1} OUT 396
+gui_marker_create -id ${Wave.1} DSP0_1 456
+gui_marker_create -id ${Wave.1} DSP1_1 458
+gui_marker_create -id ${Wave.1} DSP2_1 460
+gui_marker_create -id ${Wave.1} DSP3_1 462
+gui_marker_create -id ${Wave.1} OUT_1 468
+gui_marker_select -id ${Wave.1} {  DSP0 }
 gui_marker_set_ref -id ${Wave.1}  C1
-gui_wv_zoom_timerange -id ${Wave.1} 279248 325373
+gui_wv_zoom_timerange -id ${Wave.1} 362.861 475.173
 gui_list_add_group -id ${Wave.1} -after {New Group} {Group1}
 gui_list_add_group -id ${Wave.1} -after {New Group} {{SBLK 0}}
 gui_list_add_group -id ${Wave.1} -after {New Group} {{TPE 0}}
@@ -430,7 +437,7 @@ gui_list_add_group -id ${Wave.1} -after {New Group} {{TPE 1}}
 gui_list_add_group -id ${Wave.1} -after {New Group} {{TPE 2}}
 gui_list_add_group -id ${Wave.1} -after {New Group} {{TPE 3}}
 gui_list_add_group -id ${Wave.1} -after {New Group} {Group11}
-gui_list_select -id ${Wave.1} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_start_stile.p_sumin }
+gui_list_select -id ${Wave.1} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_start_stile.act_rd_data_d {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[1].u_mid_stile.act_rd_data_d} {tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_mid_tile[2].u_mid_stile.act_rd_data_d} tb_sblk_row.u_sblk_row.u_sblk_unit_start.u_end_stile.act_rd_data_d }
 gui_seek_criteria -id ${Wave.1} {Any Edge}
 
 
@@ -446,16 +453,17 @@ if { $groupExD } {
 }
 gui_list_set_filter -id ${Wave.1} -list { {Buffer 1} {Input 1} {Others 1} {Linkage 1} {Output 1} {Parameter 1} {All 1} {Aggregate 1} {LibBaseMember 1} {Event 1} {Assertion 1} {Constant 1} {Interface 1} {BaseMembers 1} {Signal 1} {$unit 1} {Inout 1} {Variable 1} }
 gui_list_set_filter -id ${Wave.1} -text {*}
-gui_list_set_insertion_bar  -id ${Wave.1} -group {SBLK 0}  -item {tb_sblk_row.u_sblk_row.u_sblk_unit_start.psum_wr_d[31:0]} -position below
+gui_list_set_insertion_bar  -id ${Wave.1} -group {SBLK 0}  -item {tb_sblk_row.u_sblk_row.u_sblk_unit_start.act_rd_addr_hbit[4:0]} -position below
 
-gui_marker_move -id ${Wave.1} {C1} 308717
-gui_view_scroll -id ${Wave.1} -vertical -set 419
+gui_marker_move -id ${Wave.1} {C1} 384
+gui_view_scroll -id ${Wave.1} -vertical -set 450
 gui_show_grid -id ${Wave.1} -enable false
 # Restore toplevel window zorder
 # The toplevel window could be closed if it has no view/pane
 if {[gui_exist_window -window ${TopLevel.1}]} {
 	gui_set_active_window -window ${TopLevel.1}
 	gui_set_active_window -window ${Source.1}
+	gui_set_active_window -window ${DLPane.1}
 }
 if {[gui_exist_window -window ${TopLevel.2}]} {
 	gui_set_active_window -window ${TopLevel.2}

@@ -118,7 +118,8 @@ module sblk_ctrl(/*AUTOARG*/
       if(~rst_n) begin
          cnt_tp <= 0;
       end else begin
-         cnt_tp <= comp_flag? ((cnt_tp==n_tp-1)? 0 : cnt_tp + 1) : 0;
+         cnt_tp <= comp_flag? ((cnt_tp==n_tp-N_TILE)? 0 : cnt_tp + N_TILE) : 0;
+         // cnt_tp <= 0;
       end
    end   
 
@@ -126,7 +127,8 @@ module sblk_ctrl(/*AUTOARG*/
       if(~rst_n) begin
          cnt_tm <= 0;
       end else begin
-         cnt_tm <= comp_flag? ((cnt_tp==n_tp-1)? ((cnt_tm==n_tm-1)? 0 : cnt_tm + 1) : cnt_tm) : 0;
+         cnt_tm <= comp_flag? ((cnt_tp==n_tp-N_TILE)? ((cnt_tm==n_tm-1)? 0 : cnt_tm + 1) : cnt_tm) : 0;
+         // cnt_tm <= comp_flag? ((cnt_tm==n_tm-1)? 0 : cnt_tm + 1) : 0;
       end
    end
 
@@ -134,7 +136,8 @@ module sblk_ctrl(/*AUTOARG*/
       if(~rst_n) begin
          cnt_tn <= 0;
       end else begin
-         cnt_tn <= comp_flag? (((cnt_tp==n_tp-1) & (cnt_tm==n_tm-1))? ((cnt_tn==n_tn-1)? 0 : cnt_tn + 1) : cnt_tn) : 0;
+         cnt_tn <= comp_flag? (((cnt_tp==n_tp-N_TILE) & (cnt_tm==n_tm-1))? ((cnt_tn==n_tn-1)? 0 : cnt_tn + 1) : cnt_tn) : 0;
+         // cnt_tn <= comp_flag? ((cnt_tm==n_tm-1)? ((cnt_tn==n_tn-1)? 0 : cnt_tn + 1) : cnt_tn) : 0;
       end
    end
 
@@ -154,7 +157,7 @@ module sblk_ctrl(/*AUTOARG*/
       end
    end
 
-   assign trip_finish = (cnt_tp==n_tp-1 & cnt_tm==n_tm-1 & cnt_tn==n_tn-1);
+   assign trip_finish = (cnt_tp==n_tp-N_TILE & cnt_tm==n_tm-1 & cnt_tn==n_tn-1);
    assign trip_start = (cnt_tp==0 & cnt_tm==0 & cnt_tn==0);
    assign inst_finish = (cnt_lp==n_lp-1 & cnt_ln==n_ln-1 & trip_finish);
 
@@ -324,7 +327,7 @@ module sblk_ctrl(/*AUTOARG*/
       end else begin
          // FIXME
          // status_sblk <= inst_en_d? 1 : ((inst_finish_d[WB_DELAY_CYCLE] & ~comp_flag_d[WB_DELAY_CYCLE-1])? 0 : status_sblk);
-         status_sblk <= inst_en_d? 1 : ((inst_finish_d[WB_DELAY_CYCLE-1] & ~comp_flag_d[WB_DELAY_CYCLE-1])? 0 : status_sblk); // --rbshi: update for for `hw_refine`
+         status_sblk <= inst_en_d? 1 : (inst_finish_d[WB_DELAY_CYCLE-1]? 0 : status_sblk); // --rbshi: update for for `hw_refine`
       end
    end   
 

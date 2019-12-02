@@ -30,7 +30,7 @@ module sblk_row(/*AUTOARG*/
    // parameter WID_INST_LP=5;
    parameter WID_INST_TN=3;
    parameter WID_INST_TM=3;
-   parameter WID_INST_TP=2;
+   parameter WID_INST_TP=3;
    // FIXME: arbitrary width
    parameter WID_INST_LN=3;
    parameter WID_INST_LP=3;   

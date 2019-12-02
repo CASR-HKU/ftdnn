@@ -7,7 +7,7 @@ module sblk_unit(/*AUTOARG*/
                  // Inputs
                  clk_h, clk_l, rst_n, act_data_in, act_wr_en, act_wr_addr_hbit,
                  act_rd_addr_hbit, w_rd_addr, psum_wr_addr, psum_wr_en,
-                 psum_rd_addr
+                 psum_rd_addr, status_sblk
                  );
 
    parameter N_TILE = 40;
@@ -86,7 +86,7 @@ module sblk_unit(/*AUTOARG*/
 
 
    wire [WID_PSUM-1:0]      psum_stile_in;
-   reg [WID_PSUM-1:0]       psum_stile_in_d;
+   reg [WID_PSUM-1:0]       psum_stile_in_d[2];
    reg [2*WID_PSUM-1:0]     psum_rd_data_d;
    assign psum_stile_in = clkh_toggle? psum_rd_data_d[WID_PSUM+:WID_PSUM] : psum_rd_data_d[0+:WID_PSUM];
 
@@ -100,22 +100,24 @@ module sblk_unit(/*AUTOARG*/
 
    always_ff @(posedge clk_h or negedge rst_n) begin : proc_psum_stile_in_d
       if(~rst_n) begin
-         psum_stile_in_d <= 0;
+         psum_stile_in_d[0] <= 0;
+         psum_stile_in_d[1] <= 0;
       end else begin
-         psum_stile_in_d <= psum_stile_in;
+         psum_stile_in_d[0] <= psum_stile_in;
+         psum_stile_in_d[1] <= psum_stile_in_d[0];
       end
    end
 
    // delay the addr signals, NOTE: 1-cycle dealy constraint of cascaded DSPs
-   reg [WID_ACTADDR-1:0] act_rd_addr_d[N_TILE+4:0];
+   reg [WID_ACTADDR-1:0] act_rd_addr_d[2*N_TILE+4:0];
    always_ff @(posedge clk_h or negedge rst_n) begin : proc_act_rd_addr_d
       if(~rst_n) begin
-         for (int jj=0; jj<N_TILE+5; jj=jj+1) begin
+         for (int jj=0; jj<2*N_TILE+5; jj=jj+1) begin
             act_rd_addr_d[jj] <= 0;
          end
       end else begin
          act_rd_addr_d[0] <= {act_rd_addr_hbit, clkh_toggle};
-         for (int jj=1; jj<N_TILE+5; jj=jj+1) begin
+         for (int jj=1; jj<2*N_TILE+5; jj=jj+1) begin
             act_rd_addr_d[jj] <= act_rd_addr_d[jj-1];
          end
       end
@@ -123,47 +125,56 @@ module sblk_unit(/*AUTOARG*/
 
 
    // propogate the w_rd_addr with clk_h 
+   // YH FIX: update @clk_l because bram run @ clk_l
    reg [WID_WADDR-1:0] w_rd_addr_d[N_TILE:0];
-   always_ff @(posedge clk_h or negedge rst_n) begin : proc_w_rd_addr_d
+   always_ff @(posedge clk_l or negedge rst_n) begin : proc_w_rd_addr_d
       if(~rst_n) begin
          for (int jj=0; jj<N_TILE+1; jj=jj+1) begin
             w_rd_addr_d[jj] <= 0;
          end
       end else begin
          w_rd_addr_d[0] <= w_rd_addr;
-         for (int jj=1; jj<N_TILE+1; jj=jj+1) begin
-            w_rd_addr_d[jj] <= w_rd_addr_d[jj-1];
-         end
+         w_rd_addr_d[1] <= w_rd_addr+1;
+         w_rd_addr_d[2] <= w_rd_addr-2;
+         w_rd_addr_d[3] <= w_rd_addr-1;
+         //for (int jj=1; jj<N_TILE; jj=jj+1) begin
+         //   w_rd_addr_d[jj] <= w_rd_addr_d[jj-1];
+         //end
       end
    end
 
    // instance SuperTiles
    // start tile
-   stile #(.OPMODE(7'b0110101))
+   stile #(
+    .OPMODE(7'b0110101),
+    .NUM_AREG(1)
+    )
    u_start_stile(
                  .clk_l(clk_l),
                  .clk_h(clk_h),
                  .rst_n(rst_n),
                  .w_wr_en(1'b0),
-                 .w_rd_addr(w_rd_addr_d[1]),
+                 .w_rd_addr(w_rd_addr_d[0]),
                  .act_wr_data(act_wr_data),
                  .act_wr_en(act_wr_en[0]),
                  .act_wr_addr_hbit(act_wr_addr_hbit),
                  .act_rd_addr(act_rd_addr_d[4]),
                  .p_casout(psum[0*48+:48]),
-                 .p_sumin({{(48-PSUM_SPLIT_START_POS-WID_PSUM){1'b0}}, psum_stile_in_d, {PSUM_SPLIT_START_POS{1'b0}}})
+                 .p_sumin({{(48-PSUM_SPLIT_START_POS-WID_PSUM){1'b0}}, psum_stile_in_d[0], {PSUM_SPLIT_START_POS{1'b0}}})
                  );
    // middle tiles
    genvar                         ii;
    generate
       for (ii=1; ii<N_TILE-1; ii=ii+1) begin: u_mid_tile
-         stile
+         stile #(
+          .NUM_AREG(ii%2+1)
+          )
               u_mid_stile(
                           .clk_l(clk_l),
                           .clk_h(clk_h),
                           .rst_n(rst_n),
                           .w_wr_en(1'b0),
-                          .w_rd_addr(w_rd_addr_d[ii+1]),
+                          .w_rd_addr(w_rd_addr_d[ii]),
                           .act_wr_data(act_wr_data),
                           .act_wr_en(act_wr_en[ii]),
                           .act_wr_addr_hbit(act_wr_addr_hbit),
@@ -175,13 +186,15 @@ module sblk_unit(/*AUTOARG*/
    endgenerate
 
    // last tile
-   stile
+   stile #(
+          .NUM_AREG(2)
+          )
      u_end_stile(
                  .clk_l(clk_l),
                  .clk_h(clk_h),
                  .rst_n(rst_n),
                  .w_wr_en(1'b0),
-                 .w_rd_addr(w_rd_addr_d[N_TILE]),
+                 .w_rd_addr(w_rd_addr_d[N_TILE-1]),
                  .act_wr_data(act_wr_data),
                  .act_wr_en(act_wr_en[N_TILE-1]),
                  .act_wr_addr_hbit(act_wr_addr_hbit),
