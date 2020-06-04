@@ -1,2 +1,8 @@
+#
 hw/impl/*
 !hw/impl/*.tcl
+
+# ignore pycharm project file
+**/__pycache__
+**/.idea
+
