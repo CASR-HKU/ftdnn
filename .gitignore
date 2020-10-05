@@ -1,8 +1,11 @@
-#
-hw/impl/*
-!hw/impl/*.tcl
+# ignore vivado project
+hw/tcl/*
+# except for .tcl
+!hw/tcl/*.tcl
 
-# ignore pycharm project file
+# ignore pycharm project
 **/__pycache__
 **/.idea
 
+# ignore vscode config
+**/.vscode

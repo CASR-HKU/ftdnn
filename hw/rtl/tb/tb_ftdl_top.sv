@@ -1,6 +1,6 @@
-// unit test for sblk row
+// unit test for ftdl top
 `timescale 1ns / 10ps
-module tb_sblk_row;
+module tb_ftdl_top;
 
 parameter CLKH_PERIOD = 4;
 parameter CLKL_PERIOD = 8;
@@ -51,12 +51,6 @@ int actbuf_file;
 string line;
 int actbuf_data;
 initial begin
-    // old actbuf file
-    // actbuf_file = $fopen("/home/yhding/ftdnn/hw/mem/act.dat", "r");
-    // repeat(3) @(posedge sblk_status);
-    // $fclose(actbuf_file);
-    // $finish;
-    // new actbuf file
     actbuf_file = $fopen("/home/yhding/ftdnn/hw/mem/act/actbuf_0_0_0.dat", "r");
     @(posedge sblk_status) $fclose(actbuf_file);
     actbuf_file = $fopen("/home/yhding/ftdnn/hw/mem/act/actbuf_0_0_1.dat", "r");
@@ -77,7 +71,7 @@ parameter STA_IDLE = 0;
 parameter STA_WAIT_REQ = 1;
 parameter STA_SEND_DATA = 2;
 parameter STA_STOP_DATA = 3;
-always_ff @(posedge clk_l or negedge rst_n) begin
+always_ff @(posedge clk_l) begin
     if(~rst_n) begin
         actbuf_wr_vld <= 0;
         actbuf_wr_data <= 0;
@@ -116,7 +110,7 @@ always_ff @(posedge clk_l or negedge rst_n) begin
     end
 end
 
-sblk_row u_sblk_row(
+ftdl_top u_ftdl_top(
     .clk_h(clk_h),
     .clk_l(clk_l),
     .rst_n(rst_n),
@@ -125,8 +119,7 @@ sblk_row u_sblk_row(
     .sblk_param_en(sblk_param_en),
     .actbuf_wr_data(actbuf_wr_data),
     .actbuf_wr_req(actbuf_wr_req),
-    .actbuf_wr_vld(actbuf_wr_vld),
-    .pbuf_rd_data()
+    .actbuf_wr_vld(actbuf_wr_vld)
 );
 
 endmodule
