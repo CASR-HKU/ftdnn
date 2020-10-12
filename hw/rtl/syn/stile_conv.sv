@@ -2,7 +2,7 @@
 `timescale 1ns / 1ns
 `include "ftdnn_conf.vh"
 
-module stile(/*AUTOARG*/
+module stile_conv(/*AUTOARG*/
     // Outputs
     psum_out, psum_casout,
     // Inputs

@@ -1,7 +1,7 @@
 `timescale 1ns / 1ns
-`include "ftdl_conf.vh"
+`include "ftdnn_conv_conf.vh"
 
-module ftdl_top (
+module ftdnn_conv_top (
     // Outputs
     actbuf_wr_req, pbuf_rd_data, sblk_status,
     // Inputs
@@ -26,11 +26,11 @@ wire           [`HW_D3-1:0]                    actbuf_wr_req_d3;
 assign actbuf_wr_req = actbuf_wr_req_d3=={{`HW_D3}{1'b1}}?1:0;
 
 generate
-    for (genvar hw_d3 = 0; hw_d3 < `HW_D3; hw_d3=hw_d3+1) begin: sblk_row
-        sblk_row #(
+    for (genvar hw_d3 = 0; hw_d3 < `HW_D3; hw_d3=hw_d3+1) begin: sblk_conv_row
+        sblk_conv_row #(
             .POS_D3(hw_d3)
             )
-        sblk_row_inst(
+        sblk_conv_row_inst(
             .clk_h(clk_h),
             .clk_l(clk_l),
             .rst_n(rst_n),

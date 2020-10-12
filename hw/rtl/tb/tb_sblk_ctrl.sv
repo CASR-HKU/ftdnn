@@ -1,5 +1,5 @@
 // unit test for sblk control
-`include "ftdl_conf.vh"
+`include "ftdnn_conf.vh"
 module tb_sblk_ctrl;
 
 parameter CLK_PERIOD = 10;

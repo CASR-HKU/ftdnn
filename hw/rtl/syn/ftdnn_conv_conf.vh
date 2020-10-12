@@ -1,4 +1,4 @@
-// FTDL configuration define
+// FTDNN CONV configuration define
 
 // Data length define
 `define        PSUM_DATA_LEN                   32

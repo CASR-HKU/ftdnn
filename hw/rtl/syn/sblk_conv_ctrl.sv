@@ -1,7 +1,7 @@
 `timescale 1ns / 1ns
-`include "ftdnn_conf.vh"
+`include "ftdnn_conv_conf.vh"
 
-module sblk_ctrl(
+module sblk_conv_ctrl (
     // Outputs
     wbuf_rd_addr, actbuf_wr_en, actbuf_wr_addrh, actbuf_wr_req, actbuf_rd_addrh,
     pbuf_wr_en, pbuf_wr_addr, pbuf_rd_addr, sblk_status,

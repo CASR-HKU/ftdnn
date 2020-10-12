@@ -2,7 +2,7 @@
 `timescale 1ns / 1ns
 `include "ftdnn_conf.vh"
 
-module sblk_unit(
+module sblk_conv_unit(
     // Outputs
     pbuf_rd_data,
     // Inputs
@@ -138,18 +138,18 @@ always_ff @(posedge clk_l or negedge rst_n) begin : proc_pbuf_rd_addr_d
     end
 end
 
-// generate HW_D1 stile
+// generate HW_D1 stile_conv
 generate
     for (genvar hw_d1 = 0; hw_d1 < `HW_D1; hw_d1=hw_d1+1) begin: tpe
         // first TPE
         if (hw_d1==0) begin: u
-            stile #(
+            stile_conv #(
                 .POS_D3(POS_D3),
                 .POS_D2(POS_D2),
                 .POS_D1(hw_d1),
                 .OPMODE(7'b0110101)
                 )
-            stile_inst(
+            stile_conv_inst(
                 .clk_h(clk_h),
                 .clk_l(clk_l),
                 .rst_n(rst_n),
@@ -165,12 +165,12 @@ generate
         end
         // TPE in the mid
         else if (hw_d1!=`HW_D1-1) begin: u
-            stile #(
+            stile_conv #(
                 .POS_D3(POS_D3),
                 .POS_D2(POS_D2),
                 .POS_D1(hw_d1)
                 )
-            stile_inst(
+            stile_conv_inst(
                 .clk_h(clk_h),
                 .clk_l(clk_l),
                 .rst_n(rst_n),
@@ -186,12 +186,12 @@ generate
         end
         // last TPE
         else begin: u
-            stile #(
+            stile_conv #(
                 .POS_D3(POS_D3),
                 .POS_D2(POS_D2),
                 .POS_D1(hw_d1)
                 )
-            stile_inst(
+            stile_conv_inst(
                 .clk_h(clk_h),
                 .clk_l(clk_l),
                 .rst_n(rst_n),

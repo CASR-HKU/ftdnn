@@ -10,11 +10,11 @@ from data_partition import get_actbuf
 [HW_L_1,HW_L_2,HW_L_3] = conf.HW_L_Kx
 [HW_T_1,HW_T_2,HW_T_3] = conf.HW_T_Kx
 
-MEM_FILE_DIR = 'hw/mem/act/'
+MEM_FILE_DIR = '../mem/act/'
 
 def main():
     # read data from .npy file
-    act = np.load('hw/scripts/data/data_act_in.npy')  # size: LOOP_K3 * LOOP_K1
+    act = np.load('./data/data_act_in.npy')  # size: LOOP_K3 * LOOP_K1
     td3_1 = 0 # HW_D3_1 = 1
     td3_3 = 0
     tx_1 = 0

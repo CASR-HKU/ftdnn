@@ -2,7 +2,7 @@
 import numpy as np
 import conf
 from data_partition import get_wbuf, get_actbuf
-from mapping import trans2loop, trans2hw
+from workload_mapping import trans2loop, trans2hw
 
 LOOP_K1 = conf.LOOP_K1      # N
 LOOP_K2 = conf.LOOP_K2      # M
@@ -57,8 +57,8 @@ def workload_sim(w,act,td1,td2,td3,tx,tl,tt):
 
 
 if __name__ == "__main__":
-    w = np.load('hw/scripts/data/data_w.npy')  # size: LOOP_K1 * LOOP_K2
-    act = np.load('hw/scripts/data/data_act_in.npy')  # size: LOOP_K3 * LOOP_K1
+    w = np.load('./data/data_w.npy')  # size: LOOP_K1 * LOOP_K2
+    act = np.load('./data/data_act_in.npy')  # size: LOOP_K3 * LOOP_K1
     pbuf = np.zeros((2, HW_T_3*HW_T_2*HW_L_3*HW_L_2//2),dtype=np.int)
     # constant sblk(d2, d3)
     d2_1 = 0

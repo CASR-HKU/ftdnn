@@ -10,14 +10,14 @@ from data_partition import get_wbuf
 [HW_L_1,HW_L_2,HW_L_3] = conf.HW_L_Kx
 [HW_T_1,HW_T_2,HW_T_3] = conf.HW_T_Kx
 
-MEM_FILE_DIR = 'hw/mem/w/'
+MEM_FILE_DIR = '../mem/w/'
 # MEM_FILE_LINE_SUM = 128  # BRAM36
 MEM_FILE_LINE_SUM = 64  # BRAM18
 MEM_FILE_LINE_LEN = 16  # 16 number in one line
 
 def main():
     # read data from .npy file
-    w = np.load('hw/scripts/data/data_w.npy')  # size: FOR_LOOP_K1 * FOR_LOOP_K2
+    w = np.load('./data/data_w.npy')  # size: FOR_LOOP_K1 * FOR_LOOP_K2
     td1_2 = 0
     td2_1 = 0
     td3_1 = 0
@@ -51,29 +51,6 @@ def write2mem(data, file_name):
             mem_file.write('\n')
     mem_file.close()
     print(mem_file.name+" printed.")
-
-
-def write2dat(data, file_name):
-    data_len = data.size
-    mem_len = MEM_FILE_LINE_SUM*MEM_FILE_LINE_LEN
-    # transform data to .dat size
-    if mem_len<data_len:
-        print("Data size exceed.")
-        exit(-1)
-    mem = np.concatenate((np.reshape(data, data_len), np.zeros(mem_len - data_len, dtype=np.int)), axis=None)
-    mem = np.reshape(mem, (MEM_FILE_LINE_SUM, MEM_FILE_LINE_LEN))
-    # write to .dat file
-    mem_file = open(MEM_FILE_DIR + file_name+'.dat', 'w')
-    for line_idx in np.arange(MEM_FILE_LINE_SUM):
-        # according to BRAM address mapping and INIT_xx format
-        # data should write backward intra-line
-        for len_idx in np.arange(MEM_FILE_LINE_LEN):
-            data_str = "%04X" % mem[line_idx][MEM_FILE_LINE_LEN-1-len_idx] # backward intra-line
-            mem_file.write(data_str)
-        if line_idx != MEM_FILE_LINE_SUM-1:
-            mem_file.write('\n')
-    mem_file.close()
-
 
 if __name__ == '__main__':
     main()

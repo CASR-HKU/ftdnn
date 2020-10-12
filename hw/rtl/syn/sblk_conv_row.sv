@@ -1,7 +1,7 @@
 `timescale 1ns / 1ns
-`include "ftdnn_conf.vh"
+`include "ftdnn_conv_conf.vh"
 
-module sblk_row (
+module sblk_conv_row (
     // Outputs
     actbuf_wr_req, pbuf_rd_data, sblk_status,
     // Inputs
@@ -34,10 +34,10 @@ wire           [`PBUF_ADDR_LEN-1:0]            pbuf_rd_addr;
 output wire    [`PBUF_DATA_LEN*`HW_D2-1:0]     pbuf_rd_data;
 
 
-sblk_ctrl #(
+sblk_conv_ctrl #(
     .POS_D3(POS_D3)
     )
-sblk_ctrl_inst(
+sblk_conv_ctrl_inst(
     .clk_l(clk_l),
     .rst_n(rst_n),
     .sblk_status(sblk_status),
@@ -56,12 +56,12 @@ sblk_ctrl_inst(
 
 
 generate
-    for (genvar hw_d2 = 0; hw_d2 < `HW_D2; hw_d2=hw_d2+1) begin: sblk_col
-        sblk_unit #(
+    for (genvar hw_d2 = 0; hw_d2 < `HW_D2; hw_d2=hw_d2+1) begin: sblk_conv_col
+        sblk_conv_unit #(
             .POS_D3(POS_D3),
             .POS_D2(hw_d2)
             )
-        sblk_unit_inst(
+        sblk_conv_unit_inst(
             .clk_h(clk_h),
             .clk_l(clk_l),
             .rst_n(rst_n),
