@@ -95,8 +95,10 @@ if __name__ == "__main__":
 
 	total_time = 0
 	output_list = []
-	for i in range(hw.shape[0]):
-		for j in range(sw.shape[0]):
+	# for i in range(hw.shape[0]):
+	# 	for j in range(sw.shape[0]):
+	for i in range(1):
+		for j in range(1):
 			conf = {}
 			out_dict = {}
 			for hw_key in HW_KEY:
