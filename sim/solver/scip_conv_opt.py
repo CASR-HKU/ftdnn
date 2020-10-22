@@ -3,6 +3,11 @@ import numpy as np
 import pandas
 import time
 import pickle
+from functools import reduce
+
+
+def list_prod(vars):
+	return reduce(lambda x, y : x * y, vars)
 
 def conv_model(conf_hw, conf_workload):
 	model = Model("Example")
@@ -28,10 +33,9 @@ def conv_model(conf_hw, conf_workload):
 
 	# keep tile param of infeasible partition dim to 1
 	for i in range(loop_depth):
-		for j in range(loop_depth):
+		for j in range(6):
 			if adj[j, i] == 0:
-				model.addCons(x[i, j] == 1) 
-
+				model.addCons(x[i, j] == 1)
 
 	# mapping matrix space constraint
 	for i in range(loop_depth):
@@ -40,27 +44,27 @@ def conv_model(conf_hw, conf_workload):
 
 
 	# spartial partition - D1,2,3
-	for i in range(3):
-		model.addCons(x[0, i] * x[1, i] * x[2, i] * x[3, i] * x[4, i] * x[5, i] <= conf_hw[list(conf_hw.keys())[i]])
+	for j in range(3):
+		model.addCons(list_prod([x[i, j] for i in range(5)]) <= conf_hw[list(conf_hw.keys())[j]])
 
 	# worload amount
-	for j in range(loop_depth):
-		model.addCons(x[j, 0] * x[j, 1] * x[j, 2] * x[j, 3] * x[j, 4] * x[j, 5]  >= conf_workload[list(conf_workload.keys())[j]])
+	for i in range(loop_depth):
+		model.addCons(list_prod([x[i, j] for j in range(5)])  >= conf_workload[list(conf_workload.keys())[i]])
 
 	# constraint1: accumulation latency - tm * tw * th > D1 + lat (4)
-	model.addCons(x[0, 5] * x[2, 5] * x[3, 5] >= (conf_hw['D1'] + 4))
+	model.addCons(list_prod([x[i, 5] for i in [0, 2, 3]]) >= (conf_hw['D1'] + 4))
 
 	# constraint2: WBUF consumption <= N_W (tlx - m, n, i, j)
 	n_w = model.addVar("n_w", vtype="INTEGER")
-	model.addCons(x[0, 5] * x[1, 5] * x[4, 5] * x[5, 5] * x[0, 4] * x[1, 4] * x[4, 4] * x[5, 4] * x[0, 3] * x[1, 3] * x[4, 3] * x[5, 3] == n_w)
+	model.addCons(list_prod([x[i, j] for i in [0, 1, 4, 5] for j in [5, 4, 3]]) == n_w)
 	model.addCons(n_w <= conf_hw['N_W'])
 
 	# constraint3: ActBUF consumption <= N_ACT (t - n, w, h)
-	model.addCons(x[1, 5] * x[2, 5] * x[3, 5] <= conf_hw['N_ACT'])
+	model.addCons(list_prod([x[i, 5] for i in [1, 2, 3]]) <= conf_hw['N_ACT'])
 
 	# constraint4: PSum consumption <= N_PSUM (tl - m, w, h)
 	n_psum = model.addVar("n_psum", vtype="INTEGER")
-	model.addCons(x[0, 5] * x[2, 5] * x[3, 5] * x[0, 4] * x[2, 4] * x[3, 4] == n_psum)
+	model.addCons(list_prod([x[i, j] for i in [0, 2, 3] for j in [5, 4]]) == n_psum)
 	model.addCons(n_psum <= conf_hw['N_PSUM'])
 
 	# performance evaluation
@@ -75,15 +79,15 @@ def conv_model(conf_hw, conf_workload):
 
 	# estimate the computation time
 	c_comp = model.addVar("c_comp", vtype="INTEGER")
-	model.addCons(c_comp == x[0, 5] * x[1, 5] * x[2, 5] * x[3, 5] * x[4, 5] * x[5, 5] * x[0, 4] * x[1, 4] * x[2, 4] * x[3, 4] * x[4, 4] * x[5, 4] * x[0, 3] * x[1, 3] * x[2, 3] * x[3, 3] * x[4, 3] * x[5, 3])
+	model.addCons(list_prod([x[i, j] for i in range(5) for j in [5, 4, 3]]) == c_comp)
 
 	c_x = model.addVar("c_x", vtype="INTEGER")
-	model.addCons(x[0, 3] * x[1, 3] * x[2, 3] * x[3, 3] * x[4, 3] * x[5, 3] == c_x)
+	model.addCons(list_prod([x[i, 3] for i in range(5)]) == c_x)
 	c_l = model.addVar("c_l", vtype="INTEGER")
-	model.addCons(x[0, 4] * x[1, 4] * x[2, 4] * x[3, 4] * x[4, 4] * x[5, 4] == c_l)
+	model.addCons(list_prod([x[i, 4] for i in range(5)]) == c_l)
 
 	# estimate actrd
-	model.addCons(x[1, 5] * x[2, 5] * x[3, 5] * c_l * c_x == n_actrd)
+	model.addCons(list_prod([x[i, 5] for i in range(1, 4)] + [c_l, c_x]) == n_actrd)
 	
 	# estimate psumwr
 	model.addCons(n_psum * c_x == n_psumwr)
