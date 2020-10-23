@@ -45,11 +45,11 @@ def conv_model(conf_hw, conf_workload):
 
 	# spartial partition - D1,2,3
 	for j in range(3):
-		model.addCons(list_prod([x[i, j] for i in range(5)]) <= conf_hw[list(conf_hw.keys())[j]])
+		model.addCons(list_prod([x[i, j] for i in range(6)]) <= conf_hw[list(conf_hw.keys())[j]])
 
 	# worload amount
 	for i in range(loop_depth):
-		model.addCons(list_prod([x[i, j] for j in range(5)])  >= conf_workload[list(conf_workload.keys())[i]])
+		model.addCons(list_prod([x[i, j] for j in range(6)])  >= conf_workload[list(conf_workload.keys())[i]])
 
 	# constraint1: accumulation latency - tm * tw * th > D1 + lat (4)
 	model.addCons(list_prod([x[i, 5] for i in [0, 2, 3]]) >= (conf_hw['D1'] + 4))
@@ -79,29 +79,29 @@ def conv_model(conf_hw, conf_workload):
 
 	# estimate the computation time
 	c_comp = model.addVar("c_comp", vtype="INTEGER")
-	model.addCons(list_prod([x[i, j] for i in range(5) for j in [5, 4, 3]]) == c_comp)
+	model.addCons(list_prod([x[i, j] for i in range(6) for j in [5, 4, 3]]) == c_comp)
 
 	c_x = model.addVar("c_x", vtype="INTEGER")
-	model.addCons(list_prod([x[i, 3] for i in range(5)]) == c_x)
+	model.addCons(list_prod([x[i, 3] for i in range(6)]) == c_x)
 	c_l = model.addVar("c_l", vtype="INTEGER")
-	model.addCons(list_prod([x[i, 4] for i in range(5)]) == c_l)
+	model.addCons(list_prod([x[i, 4] for i in range(6)]) == c_l)
 
 	# estimate actrd
-	model.addCons(list_prod([x[i, 5] for i in range(1, 4)] + [c_l, c_x]) == n_actrd)
+	model.addCons(list_prod([x[i, 5] for i in [1, 2, 3]] + [c_l, c_x] + [conf_hw['D3']]) == n_actrd)
 	
 	# estimate psumwr
-	model.addCons(n_psum * c_x == n_psumwr)
+	model.addCons(n_psum * c_x * conf_hw['D3'] * conf_hw['D2'] == n_psumwr)
 
 	# estimate psumrd
 	model.addCons(n_psumwr == n_psumrd)
 
 	# bandwidth constraints
-	model.addCons((n_actrd / c_exe) + (n_psumrd / c_exe) <= dram_rd_bw)
-	model.addCons((n_psumwr / c_exe) <= dram_wr_bw)
+	model.addCons((n_actrd + n_psumrd) <= dram_rd_bw * c_exe)
+	model.addCons(n_psumwr <= dram_wr_bw * c_exe)
 		
 	model.addCons(c_comp <= c_exe)
-	model.addCons((n_actrd + n_psumrd) / dram_rd_bw <= c_exe)
-	model.addCons(n_psumwr / dram_wr_bw <= c_exe)
+	model.addCons((n_actrd + n_psumrd) <= dram_rd_bw * c_exe)
+	model.addCons(n_psumwr <= dram_wr_bw * c_exe)
 
 
 
