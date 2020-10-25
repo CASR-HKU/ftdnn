@@ -66,7 +66,7 @@ def wbuf_test():
     idx2slc_wbuf_test()
 
     # data slice test
-    w = np.load('hw/scripts/data/data_w.npy')
+    w = np.load('./data/data_w.npy')
     wbuf_idx_k1 = [0, 0, 0]  # [td1_1, td2_1, td3_1]
     wbuf_idx_k2 = [0, 0, 0]  # [td1_2, td2_2, td3_2]
     w_out = get_wbuf(w,wbuf_idx_k1,wbuf_idx_k2)
@@ -123,7 +123,7 @@ def actbuf_test():
     idx2slc_actbuf_test()
 
     # data slice test
-    act = np.load('hw/scripts/data/data_act_in.npy')
+    act = np.load('./data/data_act_in.npy')
     actbuf_idx_k3 = [0, 0, 0, 0]  # [td1_3, tl_3, tx_3, td3_3]
     actbuf_idx_k1 = [0, 0, 0, 0]  # [td1_1, tl_1, tx_1, td3_1]
     act_out = get_actbuf(act,actbuf_idx_k3,actbuf_idx_k1)

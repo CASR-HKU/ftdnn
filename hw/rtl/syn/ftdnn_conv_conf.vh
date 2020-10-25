@@ -13,61 +13,28 @@
 `define        ACTBUF_ADDRH_LEN                (`ACTBUF_ADDR_LEN-1)
 `define        ACTBUF_ADDRM_LEN                (`ACTBUF_ADDR_LEN-2)
 
-// For loop define
-`define        FOR_LOOP_LEVEL                  3
-`define        FOR_LOOP_K1                     200      // N
-`define        FOR_LOOP_K2                     100      // M
-`define        FOR_LOOP_K3                     150      // P
-
 // Hardware spatial define
-`define        HW_D1_K1                        4
-`define        HW_D1_K2                        1
-`define        HW_D1_K3                        1
-`define        HW_D1                           4
+`define        HW_D1                           9
 `define        HW_D1_LEN                       $clog2(`HW_D1)
-
-`define        HW_D2_K1                        1
-`define        HW_D2_K2                        5
-`define        HW_D2_K3                        1
-`define        HW_D2                           5
-
-`define        HW_D3_K1                        1
-`define        HW_D3_K2                        2
-`define        HW_D3_K3                        5
-`define        HW_D3                           10
+`define        HW_D2                           8
+`define        HW_D3                           16
 
 // Hardware temporal define
-`define        HW_X_K1                         5
-`define        HW_X_K1_LEN                     $clog2(`HW_X_K1)
-// `define        HW_X_K2                         1
-// `define        HW_X_K2_LEN                     $clog2(`HW_X_K2)
-// `define        HW_X_K3                         1
-// `define        HW_X_K3_LEN                     $clog2(`HW_X_K3)
-`define        HW_X                            5
+`define        HW_TEMP_PARAM0_LEN              4
+`define        HW_TEMP_PARAM1_LEN              4
+`define        HW_TEMP_PARAM2_LEN              4
+`define        HW_TEMP_PARAM3_LEN              4
+`define        HW_TEMP_PARAM4_LEN              4
+`define        HW_TEMP_PARAM5_LEN              4
+`define        HW_TEMP_PARAM6_LEN              4
+`define        HW_TEMP_PARAM7_LEN              4
 
-// `define        HW_L_K1                         1
-// `define        HW_L_K1_LEN                     $clog2(`HW_L_K1)
-// `define        HW_L_K2                         1
-// `define        HW_L_K2_LEN                     $clog2(`HW_L_K2)
-`define        HW_L_K3                         5
-`define        HW_L_K3_LEN                     $clog2(`HW_L_K3)
-`define        HW_L                            5
-
-`define        HW_T_K1                         10
-`define        HW_T_K1_LEN                     $clog2(`HW_T_K1)
-`define        HW_T_K2                         10
-`define        HW_T_K2_LEN                     $clog2(`HW_T_K2)
-`define        HW_T_K3                         6
-`define        HW_T_K3_LEN                     $clog2(`HW_T_K3)
-`define        HW_T                            600
-
-`define        HW_XLT_LEN                      (`HW_X_K1_LEN+`HW_L_K3_LEN+`HW_T_K1_LEN+`HW_T_K2_LEN+`HW_T_K3_LEN+`ACTBUF_ADDRM_LEN)
-`define        HW_X_K1_POS                     (`HW_XLT_LEN-`HW_X_K1_LEN)
-`define        HW_L_K3_POS                     (`HW_X_K1_POS-`HW_L_K3_LEN)
-`define        HW_T_K1_POS                     (`HW_L_K3_POS-`HW_T_K1_LEN)
-`define        HW_T_K2_POS                     (`HW_T_K1_POS-`HW_T_K2_LEN)
-`define        HW_T_K3_POS                     (`HW_T_K2_POS-`HW_T_K3_LEN)
-`define        ACTBUF_ADDRM_POS                (`HW_T_K3_POS-`ACTBUF_ADDRM_LEN)
-
-// BUF addr define
-`define        ACTBUF_ADDRM_MAX                ((`HW_T_K1*`HW_T_K3)>>1)
+`define        HW_TEMP_PARAM_LEN               32
+`define        HW_TEMP_PARAM0_POS              0
+`define        HW_TEMP_PARAM1_POS              (`HW_TEMP_PARAM0_POS+`HW_TEMP_PARAM0_LEN)
+`define        HW_TEMP_PARAM2_POS              (`HW_TEMP_PARAM1_POS+`HW_TEMP_PARAM1_LEN)
+`define        HW_TEMP_PARAM3_POS              (`HW_TEMP_PARAM2_POS+`HW_TEMP_PARAM2_LEN)
+`define        HW_TEMP_PARAM4_POS              (`HW_TEMP_PARAM3_POS+`HW_TEMP_PARAM3_LEN)
+`define        HW_TEMP_PARAM5_POS              (`HW_TEMP_PARAM4_POS+`HW_TEMP_PARAM4_LEN)
+`define        HW_TEMP_PARAM6_POS              (`HW_TEMP_PARAM5_POS+`HW_TEMP_PARAM5_LEN)
+`define        HW_TEMP_PARAM7_POS              (`HW_TEMP_PARAM6_POS+`HW_TEMP_PARAM6_LEN)

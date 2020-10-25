@@ -8,4 +8,5 @@ hw/tcl/*
 **/.idea
 
 # ignore vscode config
+*.code-workspace
 **/.vscode
