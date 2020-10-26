@@ -18,10 +18,10 @@ MAP_PARAM = np.array([
     #M, N, W, H, I, J
     [1, 1, 1, 1, 3, 3],  # D1
     [8, 1, 1, 1, 1, 1],  # D2
-    [1, 1, 4, 4, 1, 1],  # D3
-    [1, 4, 7, 2, 1, 1],  # X
-    [1, 4, 1, 1, 1, 1],  # L
-    [8, 4, 2, 7, 1, 1],  # T
+    [1, 1, 4, 2, 1, 1],  # D3
+    [1, 4, 2, 7, 1, 1],  # X
+    [1, 8, 1, 1, 1, 1],  # L
+    [8, 2, 7, 4, 1, 1],  # T
 ], dtype=np.int)
 
 adjacency_mat = (MAP_PARAM==1)
@@ -40,7 +40,6 @@ HW_BASE = [5, 4, 3, 2, 1, 0]  # small to large
 
 # data size
 CONV_STRIDE = 1
-
 
 def wl2act_1d(wl):
 # input:    wl_idx: [k1, k2, k3, k4, k5, k6]

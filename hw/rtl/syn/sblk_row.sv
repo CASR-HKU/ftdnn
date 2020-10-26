@@ -5,7 +5,7 @@ module sblk_row (
     // Outputs
     actbuf_wr_req, pbuf_rd_data, sblk_status,
     // Inputs
-    clk_h, clk_l, rst_n, actbuf_wr_data, actbuf_wr_vld, sblk_param, sblk_param_en
+    clk_h, clk_l, rst_n, actbuf_wr_data, actbuf_wr_vld, temp_param, temp_param_en
 );
 parameter POS_D3=0;
 
@@ -14,18 +14,19 @@ input wire                                     clk_l;
 input wire                                     rst_n;
 
 output wire                                    sblk_status;
-input wire     [`HW_XLT_LEN-1:0]               sblk_param;
-input wire                                     sblk_param_en;
+input wire     [`HW_TEMP_PARAM_LEN-1:0]        temp_param;
+input wire                                     temp_param_en;
 
 wire           [`WBUF_ADDR_LEN-1:0]            wbuf_rd_addr;
 
 wire           [`HW_D1-1:0]                    actbuf_wr_en;
-wire           [`ACTBUF_ADDR_LEN-2:0]          actbuf_wr_addrh;
+wire           [`ACTBUF_ADDRH_LEN-1:0]         actbuf_wr_addrh;
 input wire     [2*`ACTBUF_DATA_LEN-1:0]        actbuf_wr_data;
 output wire                                    actbuf_wr_req;
 input wire                                     actbuf_wr_vld;
 
-wire           [`ACTBUF_ADDR_LEN-2:0]          actbuf_rd_addrh;
+wire           [`ACTBUF_ADDR_LEN-1:0]          actbuf_rd_addr;
+wire           [`ACTBUF_ADDR_LEN-1:0]          actbuf_rd_addr_increment;
 
 wire                                           pbuf_wr_en;
 wire           [`PBUF_ADDR_LEN-1:0]            pbuf_wr_addr;
@@ -41,14 +42,15 @@ sblk_ctrl_inst(
     .clk_l(clk_l),
     .rst_n(rst_n),
     .sblk_status(sblk_status),
-    .sblk_param(sblk_param),
-    .sblk_param_en(sblk_param_en),
+    .temp_param(temp_param),
+    .temp_param_en(temp_param_en),
     .wbuf_rd_addr(wbuf_rd_addr),
     .actbuf_wr_en(actbuf_wr_en),
     .actbuf_wr_addrh(actbuf_wr_addrh),
     .actbuf_wr_req(actbuf_wr_req),
     .actbuf_wr_vld(actbuf_wr_vld),
-    .actbuf_rd_addrh(actbuf_rd_addrh),
+    .actbuf_rd_addr(actbuf_rd_addr),
+    .actbuf_rd_addr_increment(actbuf_rd_addr_increment),
     .pbuf_wr_en(pbuf_wr_en),
     .pbuf_wr_addr(pbuf_wr_addr),
     .pbuf_rd_addr(pbuf_rd_addr)
@@ -69,7 +71,8 @@ generate
             .actbuf_wr_en(actbuf_wr_en),
             .actbuf_wr_addrh(actbuf_wr_addrh),
             .actbuf_wr_data(actbuf_wr_data),
-            .actbuf_rd_addrh(actbuf_rd_addrh),
+            .actbuf_rd_addr(actbuf_rd_addr),
+            .actbuf_rd_addr_increment(actbuf_rd_addr_increment),
             .pbuf_wr_en(pbuf_wr_en),
             .pbuf_wr_addr(pbuf_wr_addr),
             .pbuf_rd_addr(pbuf_rd_addr),

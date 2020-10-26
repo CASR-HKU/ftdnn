@@ -1,7 +1,7 @@
 `timescale 1ns / 1ns
-`include "ftdnn_conv_conf.vh"
+`include "ftdnn_conf.vh"
 
-module sblk_conv_ctrl (
+module sblk_ctrl (
     // Outputs
     wbuf_rd_addr, actbuf_wr_en, actbuf_wr_addrh, actbuf_wr_req, actbuf_rd_addr, actbuf_rd_addr_increment,
     pbuf_wr_en, pbuf_wr_addr, pbuf_rd_addr, sblk_status,
@@ -32,10 +32,9 @@ output wire    [`PBUF_ADDR_LEN-1:0]            pbuf_wr_addr;
 output wire    [`PBUF_ADDR_LEN-1:0]            pbuf_rd_addr;
 
 /*********************************************************************************************/
-/**************SIGNAL DECLARATION*************************************************************/
+/**************state control signal***********************************************************/
 /*********************************************************************************************/
 
-/**************SBLK_CTRL state control********************************************************/
 wire                                           actbuf_flag;
 reg                                            actbuf_swap_en;
 reg                                            actbuf_updt_sel;
@@ -47,16 +46,11 @@ wire                                           actbuf_updt_finish;
 wire                                           actbuf_calc_finish;
 
 reg                                            pbuf_calc_sel;
-/**************ACTBUF update control**********************************************************/
-wire                                           actbuf_updt_tpe_en;
-reg            [`HW_D1_LEN-1:0]                actbuf_updt_tpe_cnt;
-wire                                           actbuf_updt_tpe_rst;
-wire                                           actbuf_updt_addrm_en;
-reg            [`ACTBUF_ADDRM_LEN-1:0]         actbuf_updt_addrm_cnt;
-wire                                           actbuf_updt_addrm_rst;
-reg            [`ACTBUF_ADDRM_LEN-1:0]         ACTBUF_UPDT_ADDRM_CAP;
 
-/**************Temporal loop control*******************************************************/
+/*********************************************************************************************/
+/**************temporal loop signal***********************************************************/
+/*********************************************************************************************/
+
 reg                                            calc_loop_en;
 wire                                           calc_flag;
 reg                                            t_param_update_en;
@@ -94,10 +88,31 @@ reg            [`HW_TEMP_PARAM7_LEN-1:0]       T_PARAM7;
 wire                                           t_param7_en;
 wire                                           t_param7_rst;
 
+/*********************************************************************************************/
+/**************ACTBUF update control signal***************************************************/
+/*********************************************************************************************/
+
+wire                                           actbuf_updt_tpe_en;
+reg            [`HW_D1_LEN-1:0]                actbuf_updt_tpe_cnt;
+wire                                           actbuf_updt_tpe_rst;
+wire                                           actbuf_updt_addrm_en;
+reg            [`ACTBUF_ADDRM_LEN-1:0]         actbuf_updt_addrm_cnt;
+wire                                           actbuf_updt_addrm_rst;
+reg            [`ACTBUF_ADDRM_LEN-1:0]         ACTBUF_UPDT_ADDRM_CAP;
+
+/*********************************************************************************************/
+/**************calculation control signal*****************************************************/
+/*********************************************************************************************/
+
 // ACTBUF read address counter
 reg            [`ACTBUF_ADDR_LEN-2:0]          actbuf_rd_cnt;
 // PBUF read address counter
 reg            [`PBUF_ADDR_LEN-2:0]            pbuf_rd_cnt;
+
+/*********************************************************************************************/
+/**************delay control signal***********************************************************/
+/*********************************************************************************************/
+
 // delay from pbuf_rd_addr to pbuf_wr_addr
 localparam PBUF_WR_ADDR_DELAY = 4 + (`HW_D1+1)/2 + 1;
 reg            [`PBUF_ADDR_LEN-1:0]            pbuf_rd_addr_d[PBUF_WR_ADDR_DELAY];
@@ -109,7 +124,7 @@ reg                                            calc_loop_en_d[PBUF_WR_EN_DELAY];
 assign sblk_status = actbuf_flag;
 
 /*********************************************************************************************/
-/**************SBLK_CTRL state control********************************************************/
+/**************state control******************************************************************/
 /*********************************************************************************************/
 
 assign actbuf_flag = (actbuf_updt_finish&actbuf_calc_finish)|
@@ -148,7 +163,9 @@ always_ff @(posedge clk_l or negedge rst_n) begin : proc_actbuf_sta
     end
 end
 
-// Loop param
+/*********************************************************************************************/
+/**************temporal loop read*************************************************************/
+/*********************************************************************************************/
 
 always @(posedge clk_l or negedge rst_n) begin : proc_temp_param
     if (~rst_n) begin
@@ -185,7 +202,7 @@ always @(posedge clk_l or negedge rst_n) begin : proc_temp_param
 end
 
 /*********************************************************************************************/
-/**************ACTBUF update control**********************************************************/
+/**************ACTBUF update******************************************************************/
 /*********************************************************************************************/
 
 // actbuf_wr_req: act write data request
@@ -225,7 +242,7 @@ always_ff @(posedge clk_l or negedge rst_n) begin : proc_actbuf_updt
 end
 
 /*********************************************************************************************/
-/**************Calculation loop control*******************************************************/
+/**************temporal loop control**********************************************************/
 /*********************************************************************************************/
 
 // calc_loop_en:
@@ -243,9 +260,6 @@ always_ff @(posedge clk_l or negedge rst_n) begin : proc_calc_loop_en
          end
     end
 end
-
-// ACTBUF calculation finished flag
-assign actbuf_calc_finish = t_param4_en;
 
 // Loop control
 // param0
@@ -330,8 +344,11 @@ always_ff @(posedge clk_l or negedge rst_n) begin : proc_t_param7_cnt
 end
 
 /*********************************************************************************************/
-/**************R/W address control************************************************************/
+/**************calculation control************************************************************/
 /*********************************************************************************************/
+
+// ACTBUF calculation finished flag
+assign actbuf_calc_finish = t_param4_en;
 
 // ActBUF read address
 assign actbuf_rd_addr = {actbuf_calc_sel_d, actbuf_rd_cnt};
@@ -369,6 +386,7 @@ end
 /**************delay control******************************************************************/
 /*********************************************************************************************/
 
+// for alignment with address cnt
 always_ff @(posedge clk_l or negedge rst_n) begin : proc_calc_sel_d
     if(~rst_n) begin
         actbuf_calc_sel_d <= 0;

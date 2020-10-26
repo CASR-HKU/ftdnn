@@ -5,7 +5,7 @@ module ftdnn_top (
     // Outputs
     actbuf_wr_req, pbuf_rd_data, sblk_status,
     // Inputs
-    clk_h, clk_l, rst_n, actbuf_wr_data, actbuf_wr_vld, sblk_param, sblk_param_en
+    clk_h, clk_l, rst_n, actbuf_wr_data, actbuf_wr_vld, temp_param, temp_param_en
 );
 
 input wire                                     clk_h;
@@ -13,8 +13,8 @@ input wire                                     clk_l;
 input wire                                     rst_n;
 
 output wire    [`HW_D3-1:0]                    sblk_status;
-input wire     [`HW_XLT_LEN-1:0]               sblk_param;
-input wire                                     sblk_param_en;
+input wire     [`HW_TEMP_PARAM_LEN-1:0]        temp_param;
+input wire                                     temp_param_en;
 
 input wire     [2*`ACTBUF_DATA_LEN-1:0]        actbuf_wr_data;
 output wire                                    actbuf_wr_req;
@@ -35,8 +35,8 @@ generate
             .clk_l(clk_l),
             .rst_n(rst_n),
             .sblk_status(sblk_status[hw_d3]),
-            .sblk_param(sblk_param),
-            .sblk_param_en(sblk_param_en),
+            .temp_param(temp_param),
+            .temp_param_en(temp_param_en),
             .actbuf_wr_data(actbuf_wr_data),
             .actbuf_wr_req(actbuf_wr_req_d3[hw_d3]),
             .actbuf_wr_vld(actbuf_wr_vld),

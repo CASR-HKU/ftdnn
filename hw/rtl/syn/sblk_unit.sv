@@ -7,7 +7,7 @@ module sblk_unit(
     pbuf_rd_data,
     // Inputs
     clk_h, clk_l, rst_n, actbuf_wr_data, actbuf_wr_en, actbuf_wr_addrh,
-    actbuf_rd_addrh, wbuf_rd_addr, pbuf_wr_addr, pbuf_wr_en,
+    actbuf_rd_addr,actbuf_rd_addr_increment, wbuf_rd_addr, pbuf_wr_addr, pbuf_wr_en,
     pbuf_rd_addr
 );
 parameter POS_D3=0;
@@ -25,7 +25,8 @@ input wire     [`HW_D1-1:0]                    actbuf_wr_en;
 input wire     [`ACTBUF_ADDRH_LEN-1:0]         actbuf_wr_addrh;
 input wire     [2*`ACTBUF_DATA_LEN-1:0]        actbuf_wr_data;
 
-input wire     [`ACTBUF_ADDRH_LEN-1:0]         actbuf_rd_addrh;
+input wire     [`ACTBUF_ADDR_LEN-1:0]          actbuf_rd_addr;
+input wire     [`ACTBUF_ADDR_LEN-1:0]          actbuf_rd_addr_increment;
 
 input wire                                     pbuf_wr_en;
 input wire     [`PBUF_ADDR_LEN-1:0]            pbuf_wr_addr;
@@ -39,6 +40,8 @@ wire           [`PSUM_DATA_LEN-1:0]            psum_in;
 wire           [48-1:0]                        psum_tmp[`HW_D1-2:0];
 wire           [`PSUM_DATA_LEN-1:0]            psum_out;
 reg            [`PSUM_DATA_LEN-1:0]            psum_out_d;
+wire           [`PSUM_DATA_LEN-1:0]            psum_out_h;
+reg            [`PSUM_DATA_LEN-1:0]            psum_out_l;
 
 // dealy of actbuf_in
 reg            [2*`ACTBUF_DATA_LEN-1:0]        actbuf_wr_data_d;
@@ -51,19 +54,31 @@ always_ff @(posedge clk_l or negedge rst_n) begin : proc_actbuf_wr_data
     end
 end
 
-always_ff @(posedge clk_h or negedge rst_n) begin : proc_psum_out_d
+always_ff @(posedge clk_h or negedge rst_n) begin : proc_psum_out
     if(~rst_n) begin
         psum_out_d <= 0;
+        psum_out_l <= 0;
     end else begin
         psum_out_d <= psum_out;
+        psum_out_l <= psum_out_h;
     end
 end
+
+generate
+    // for even D1, no delay
+    if (`HW_D1%2==0) begin
+        assign psum_out_h = psum_out;
+    end
+    else begin
+        assign psum_out_h = psum_out_d;
+    end
+endgenerate
 
 always_ff @(posedge clk_l or negedge rst_n) begin : proc_pbuf_wr_data
     if(~rst_n) begin
         pbuf_wr_data <= 0;
     end else begin
-        pbuf_wr_data <= {psum_out, psum_out_d};
+        pbuf_wr_data <= {psum_out_h, psum_out_l};
     end
 end
 
@@ -88,28 +103,28 @@ always_ff @(posedge clk_h or negedge rst_n) begin : proc_psum_in_d
     end
 end
 
-// delay the actbuf_rd_addrh
-// tpe[2*jj] and tpe[2*jj+1] share actbuf_rd_addrh_d[jj]
-localparam ACTBUF_RD_ADDRH_BASE = 2;
-localparam ACTBUF_RD_ADDRH_DELAY = ACTBUF_RD_ADDRH_BASE + `HW_D1/2;
-reg [`ACTBUF_ADDRH_LEN-1:0] actbuf_rd_addrh_d[ACTBUF_RD_ADDRH_DELAY];
+// delay the actbuf_rd_addr
+// tpe[2*jj] and tpe[2*jj+1] share actbuf_rd_addr_d[jj]
+localparam ACTBUF_RD_ADDR_BASE = 2;
+localparam ACTBUF_RD_ADDR_DELAY = ACTBUF_RD_ADDR_BASE + (`HW_D1+1)/2;
+reg [`ACTBUF_ADDR_LEN-1:0] actbuf_rd_addr_d[ACTBUF_RD_ADDR_DELAY];
 
-always_ff @(posedge clk_l or negedge rst_n) begin : proc_actbuf_rd_addrh_d
+always_ff @(posedge clk_l or negedge rst_n) begin : proc_actbuf_rd_addr_d
     if(~rst_n) begin
-        for (int jj=0; jj<ACTBUF_RD_ADDRH_DELAY; jj=jj+1) begin
-            actbuf_rd_addrh_d[jj] <= 0;
+        for (int jj=0; jj<ACTBUF_RD_ADDR_DELAY; jj=jj+1) begin
+            actbuf_rd_addr_d[jj] <= 0;
         end
     end else begin
-        actbuf_rd_addrh_d[0] <= actbuf_rd_addrh;
-        for (int jj=1; jj<ACTBUF_RD_ADDRH_DELAY; jj=jj+1) begin
-            actbuf_rd_addrh_d[jj] <= actbuf_rd_addrh_d[jj-1];
+        actbuf_rd_addr_d[0] <= actbuf_rd_addr;
+        for (int jj=1; jj<ACTBUF_RD_ADDR_DELAY; jj=jj+1) begin
+            actbuf_rd_addr_d[jj] <= actbuf_rd_addr_d[jj-1];
         end
     end
 end
 
 // delay the wbuf_rd_addr
 // tpe[2*jj] and tpe[2*jj+1] share wbuf_rd_addr_d[jj]
-localparam W_RD_ADDR_DELAY=`HW_D1/2;
+localparam W_RD_ADDR_DELAY=(`HW_D1+1)/2;
 reg [`WBUF_ADDR_LEN-1:0] wbuf_rd_addr_d[W_RD_ADDR_DELAY];
 always_ff @(posedge clk_l or negedge rst_n) begin : proc_wbuf_rd_addr_d
     if(~rst_n) begin
@@ -158,7 +173,8 @@ generate
                 .actbuf_wr_en(actbuf_wr_en[hw_d1]),
                 .actbuf_wr_addrh(actbuf_wr_addrh),
                 .actbuf_wr_data(actbuf_wr_data),
-                .actbuf_rd_addrh(actbuf_rd_addrh_d[ACTBUF_RD_ADDRH_BASE+hw_d1/2]),
+                .actbuf_rd_addr(actbuf_rd_addr_d[ACTBUF_RD_ADDR_BASE+hw_d1/2]),
+                .actbuf_rd_addr_increment(actbuf_rd_addr_increment),
                 .psum_in({{(48-`PSUM_DATA_LEN){1'b0}}, proc_psum_in_d0}),
                 .psum_casout(psum_tmp[hw_d1])
                 );
@@ -179,7 +195,8 @@ generate
                 .actbuf_wr_en(actbuf_wr_en[hw_d1]),
                 .actbuf_wr_addrh(actbuf_wr_addrh),
                 .actbuf_wr_data(actbuf_wr_data),
-                .actbuf_rd_addrh(actbuf_rd_addrh_d[ACTBUF_RD_ADDRH_BASE+hw_d1/2]),
+                .actbuf_rd_addr(actbuf_rd_addr_d[ACTBUF_RD_ADDR_BASE+hw_d1/2]),
+                .actbuf_rd_addr_increment(actbuf_rd_addr_increment),
                 .psum_casin(psum_tmp[hw_d1-1]),
                 .psum_casout(psum_tmp[hw_d1])
                 );
@@ -200,7 +217,8 @@ generate
                 .actbuf_wr_en(actbuf_wr_en[hw_d1]),
                 .actbuf_wr_addrh(actbuf_wr_addrh),
                 .actbuf_wr_data(actbuf_wr_data),
-                .actbuf_rd_addrh(actbuf_rd_addrh_d[ACTBUF_RD_ADDRH_BASE+hw_d1/2]),
+                .actbuf_rd_addr(actbuf_rd_addr_d[ACTBUF_RD_ADDR_BASE+hw_d1/2]),
+                .actbuf_rd_addr_increment(actbuf_rd_addr_increment),
                 .psum_casin(psum_tmp[hw_d1-1]),
                 .psum_out(psum_out)
                 );

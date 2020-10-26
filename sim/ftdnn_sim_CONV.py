@@ -2,7 +2,7 @@ import numpy as np
 from conf import HW_PARAM, WL_PARAM, WL_LEVEL, ACTIN_SIZE, W_SIZE, ACTOUT_SIZE, ACTBUF_CAPACITY, WBUF_CAPACITY
 from conf import wl2act, wl2w, wl2psum
 from idx_transform import wl2map, map2hw, hw2wl, hw2map, map2wl
-from data_partition_conv import get_actbuf_data, get_wbuf_data, ACTBUF_SIZE, WBUF_SIZE
+from data_partition import get_actbuf_data, get_wbuf_data, ACTBUF_SIZE, WBUF_SIZE
 
 act = np.load('./data/data_actin.npy')
 w = np.load('./data/data_w.npy')
@@ -110,9 +110,9 @@ def verify_psum_wr_data(d2, d3):
         psum_out = psum_in + act_wl*w_wl
         psum[tuple(wl2psum(wl_idx))] = psum_out
         # print condition
-        if ((hw_idx[0]==HW_PARAM[0]-1)&(hw_idx[3]==1)&(hw_idx[4]==0)):
+        if ((hw_idx[3]==0)&(hw_idx[4]==HW_PARAM[4]-1)&(hw_idx[0]==HW_PARAM[0]-1)):
             print("psum_out", psum_out)
-            # stop condition
+            # stop at end of T loop
             if (hw_idx[5]==(HW_PARAM[5]-1)):
                 return()
 

@@ -1,6 +1,6 @@
 import numpy as np
 from conf import HW_PARAM
-from data_partition_conv import get_actbuf, ACTBUF_SIZE
+from data_partition import get_actbuf, ACTBUF_SIZE
 
 MEM_FILE_DIR = '../hw/mem/act/'
 DAT_FILE_LINE_SUM = np.prod(ACTBUF_SIZE)*HW_PARAM[0]//2

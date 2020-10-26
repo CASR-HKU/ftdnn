@@ -15,8 +15,8 @@ wire                                           actbuf_wr_req;
 reg                                            actbuf_wr_vld;
 
 wire                                           sblk_status;
-reg            [`HW_XLT_LEN-1:0]               sblk_param;
-reg                                            sblk_param_en;
+reg            [`HW_TEMP_PARAM_LEN-1:0]        temp_param;
+reg                                            temp_param_en;
 
 initial begin
     clk_h = 1'b1;
@@ -30,41 +30,46 @@ end
 
 initial begin
     rst_n = 1'b1;
-    sblk_param_en <= 1'b0;
+    temp_param_en <= 1'b0;
     repeat(2) @(posedge clk_l);
     rst_n = 1'b0;
     repeat(2) @(posedge clk_l);
     rst_n = 1'b1;
     repeat(2) @(posedge clk_l);
-    sblk_param_en <= 1'b1;
-    sblk_param[`HW_X_K1_POS+:`HW_X_K1_LEN] <= `HW_X_K1;
-    sblk_param[`HW_L_K3_POS+:`HW_L_K3_LEN] <= `HW_L_K3;
-    sblk_param[`HW_T_K1_POS+:`HW_T_K1_LEN] <= `HW_T_K1;
-    sblk_param[`HW_T_K2_POS+:`HW_T_K2_LEN] <= `HW_T_K2;
-    sblk_param[`HW_T_K3_POS+:`HW_T_K3_LEN] <= `HW_T_K3;
-    sblk_param[`ACTBUF_ADDRM_POS+:`ACTBUF_ADDRM_LEN] <= `ACTBUF_ADDRM_MAX;
+    temp_param_en <= 1'b1;
+    temp_param[`HW_TEMP_PARAM0_POS+:`HW_TEMP_PARAM0_LEN] <= 4;
+    temp_param[`HW_TEMP_PARAM1_POS+:`HW_TEMP_PARAM1_LEN] <= 7;
+    temp_param[`HW_TEMP_PARAM2_POS+:`HW_TEMP_PARAM2_LEN] <= 2;
+    temp_param[`HW_TEMP_PARAM3_POS+:`HW_TEMP_PARAM3_LEN] <= 8;
+    temp_param[`HW_TEMP_PARAM4_POS+:`HW_TEMP_PARAM4_LEN] <= 8;
+    temp_param[`HW_TEMP_PARAM5_POS+:`HW_TEMP_PARAM5_LEN] <= 7;
+    temp_param[`HW_TEMP_PARAM6_POS+:`HW_TEMP_PARAM6_LEN] <= 2;
+    temp_param[`HW_TEMP_PARAM7_POS+:`HW_TEMP_PARAM7_LEN] <= 4;
     repeat(1) @(posedge clk_l);
-    sblk_param_en <= 1'b0;
+    temp_param_en <= 1'b0;
 end
 
 int actbuf_file;
-string line;
-int actbuf_data;
+string actbuf_file_name;
+string x_str, l_str;
 initial begin
-    // old actbuf file
-    // actbuf_file = $fopen("/home/yhding/ftdnn/hw/mem/act.dat", "r");
-    // repeat(3) @(posedge sblk_status);
-    // $fclose(actbuf_file);
-    // $finish;
-    // new actbuf file
-    actbuf_file = $fopen("/home/yhding/ftdnn/hw/mem/act/actbuf_0_0_0.dat", "r");
-    @(posedge sblk_status) $fclose(actbuf_file);
-    actbuf_file = $fopen("/home/yhding/ftdnn/hw/mem/act/actbuf_0_0_1.dat", "r");
-    @(posedge sblk_status) $fclose(actbuf_file);
-    repeat(5) @(posedge clk_h);
-    $finish;
+    for (int x=0; x<7*2*4; x=x+1) begin
+        x_str.itoa(x);
+        for (int l=0; l<8; l=l+1) begin
+            l_str.itoa(l);
+            actbuf_file_name = {"/home/yhding/ftdnn/hw/mem/act/actbuf_0_0_",x_str,"_", l_str, ".dat"};
+            $display(actbuf_file_name);
+            actbuf_file = $fopen(actbuf_file_name, "r");
+            @(posedge sblk_status) $fclose(actbuf_file);
+            if (x==1&l==1) begin
+                repeat(5) @(posedge clk_h);
+                $finish;
+            end
+        end
+    end
 end
 
+string line;
 function integer read_actbuf_updt();
     $fgets(line, actbuf_file);
     return line.atohex();
@@ -73,6 +78,7 @@ endfunction
 int tb_sta;
 int actbuf_cnt;
 int actbuf_stop_cnt;
+int actbuf_data;
 parameter STA_IDLE = 0;
 parameter STA_WAIT_REQ = 1;
 parameter STA_SEND_DATA = 2;
@@ -92,15 +98,17 @@ always_ff @(posedge clk_l or negedge rst_n) begin
                 end
             end
             STA_SEND_DATA: begin
-                actbuf_data = read_actbuf_updt();
-                actbuf_wr_vld <= 1;
-                actbuf_wr_data <= actbuf_data;
-                actbuf_cnt = actbuf_cnt + 1;
-                if (actbuf_cnt==27) begin
-                    tb_sta = STA_STOP_DATA;
-                end
-                else if (actbuf_cnt==120) begin
-                    tb_sta = STA_STOP_DATA;
+                if(actbuf_wr_req==1) begin
+                    actbuf_data = read_actbuf_updt();
+                    actbuf_wr_vld <= 1;
+                    actbuf_wr_data <= actbuf_data;
+                    actbuf_cnt = actbuf_cnt + 1;
+                    if (actbuf_cnt==27) begin
+                        tb_sta = STA_STOP_DATA;
+                    end
+                    else if (actbuf_cnt==120) begin
+                        tb_sta = STA_STOP_DATA;
+                    end
                 end
             end
             STA_STOP_DATA: begin
@@ -121,8 +129,8 @@ sblk_row u_sblk_row(
     .clk_l(clk_l),
     .rst_n(rst_n),
     .sblk_status(sblk_status),
-    .sblk_param(sblk_param),
-    .sblk_param_en(sblk_param_en),
+    .temp_param(temp_param),
+    .temp_param_en(temp_param_en),
     .actbuf_wr_data(actbuf_wr_data),
     .actbuf_wr_req(actbuf_wr_req),
     .actbuf_wr_vld(actbuf_wr_vld),

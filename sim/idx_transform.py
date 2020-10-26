@@ -1,12 +1,12 @@
 import numpy as np
-import conf
 
 from conf import MAP_PARAM, WL_PARAM, WL_LEVEL, HW_PARAM
+from conf import WL_BASE, HW_BASE
 
 # transform base:
-wl_base_ascend = conf.WL_BASE  # small to large
+wl_base_ascend = WL_BASE  # small to large
 wl_base_descend = [wl_base_ascend[ii] for ii in range(5,-1,-1)]  # large to small
-hw_base_ascend = conf.HW_BASE  # small to large
+hw_base_ascend = HW_BASE  # small to large
 hw_base_descend = [hw_base_ascend[ii] for ii in range(5,-1,-1)]  # large to small
 
 def wl2map(wl_idx):

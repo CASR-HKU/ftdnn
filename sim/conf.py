@@ -41,7 +41,6 @@ HW_BASE = [5, 4, 3, 2, 1, 0]  # small to large
 # data size
 CONV_STRIDE = 1
 
-
 def wl2act_1d(wl):
 # input:    wl_idx: [k1, k2, k3, k4, k5, k6]
 # output:   [0, k2, (k4*s+k6), (k3*s+k5)]

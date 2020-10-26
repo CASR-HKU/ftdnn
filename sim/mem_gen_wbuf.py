@@ -1,6 +1,6 @@
 import numpy as np
 from conf import HW_PARAM
-from data_partition_conv import get_wbuf
+from data_partition import get_wbuf
 
 MEM_FILE_DIR = '../hw/mem/w/'
 # MEM_FILE_LINE_SUM = 128  # BRAM36

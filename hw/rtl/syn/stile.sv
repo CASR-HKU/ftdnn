@@ -7,7 +7,7 @@ module stile(/*AUTOARG*/
     psum_out, psum_casout,
     // Inputs
     clk_h, clk_l, rst_n, wbuf_wr_en, wbuf_wr_addr, wbuf_wr_data, wbuf_rd_addr,
-    actbuf_wr_en, actbuf_wr_addrh, actbuf_wr_data, actbuf_rd_addrh,
+    actbuf_wr_en, actbuf_wr_addrh, actbuf_wr_data, actbuf_rd_addr,actbuf_rd_addr_increment,
     psum_in, psum_casin
 );
 parameter POS_D3=0;
@@ -19,7 +19,7 @@ parameter OPMODE = 7'b0010101;  // 7'b0110101 for the start NOTE: for DSPE2 in U
 localparam ODD_INDEX_TPE = POS_D1%2;
 // initialize wbuf, for behavioral sim use only
 // localparam with $sformatf() may cause error
-parameter WBUF_FILE=$sformatf("wbuf_%0d_%0d_%0d.mem",POS_D3,POS_D2,POS_D1);
+parameter WBUF_FILE=$sformatf("wbuf_%0d_%0d_%0d.mem",POS_D1,POS_D2,POS_D3);
 // parameter WBUF_FILE="wbuf_0_0_0.mem";
 // parameter WBUF_FILE="NONE";
 
@@ -39,12 +39,14 @@ reg            [`WBUF_DATA_LEN-1:0]            wbuf_rd_data_d1;
 
 // to DisRAM, act buffer wr signal
 input wire                                     actbuf_wr_en;
-input wire     [`ACTBUF_ADDR_LEN-2:0]          actbuf_wr_addrh;
-reg                                            actbuf_wr_addrl;
+input wire     [`ACTBUF_ADDRH_LEN-1:0]         actbuf_wr_addrh;
+reg                                            clkh_toggle;
 input wire     [2*`ACTBUF_DATA_LEN-1:0]        actbuf_wr_data;
+wire           [`ACTBUF_DATA_LEN-1:0]          actbuf_wr_data_clkh;
 
-input wire     [`ACTBUF_ADDR_LEN-2:0]          actbuf_rd_addrh;
-reg                                            actbuf_rd_addrl;
+input wire     [`ACTBUF_ADDR_LEN-1:0]          actbuf_rd_addr;
+input wire     [`ACTBUF_ADDR_LEN-1:0]          actbuf_rd_addr_increment;
+wire           [`ACTBUF_ADDR_LEN-1:0]          actbuf_rd_addr_clkh;
 wire           [`ACTBUF_DATA_LEN-1:0]          actbuf_rd_data;
 reg            [`ACTBUF_DATA_LEN-1:0]          actbuf_rd_data_d0;
 reg            [`ACTBUF_DATA_LEN-1:0]          actbuf_rd_data_d1;
@@ -58,6 +60,10 @@ input wire     [48-1:0]                        psum_casin;
 output wire    [48-1:0]                        psum_casout;
 output wire    [48-1:0]                        psum_out;
 
+
+// match data from clk_l domain
+assign actbuf_wr_data_clkh = clkh_toggle ? actbuf_wr_data[`ACTBUF_DATA_LEN+:`ACTBUF_DATA_LEN] : actbuf_wr_data[0+:`ACTBUF_DATA_LEN];
+assign actbuf_rd_addr_clkh = clkh_toggle ? (actbuf_rd_addr+actbuf_rd_addr_increment) : actbuf_rd_addr;
 
 // process actbuf_rd_data delay
 generate
@@ -114,21 +120,14 @@ generate
     end
 endgenerate
 
-// process act_addrl to fit clk_h
-always_ff @(posedge clk_h or negedge rst_n) begin : proc_act_addrl
+always_ff @(posedge clk_h or negedge rst_n) begin : proc_clkh_toggle
   if(~rst_n) begin
-    // init as 1, then 0 comes first
-    actbuf_rd_addrl <= 1;
-    actbuf_wr_addrl <= 1;
-end else begin
-    actbuf_rd_addrl <= ~actbuf_rd_addrl;
-    actbuf_wr_addrl <= ~actbuf_wr_addrl;
+  // init as 1, then 0 comes first
+  clkh_toggle <= 1;
+  end else begin
+  clkh_toggle <= ~clkh_toggle;
+  end
 end
-end
-
-
-wire [`ACTBUF_DATA_LEN-1:0] actbuf_wr_data_clkh;
-assign actbuf_wr_data_clkh = actbuf_wr_addrl? actbuf_wr_data[`ACTBUF_DATA_LEN+:`ACTBUF_DATA_LEN] : actbuf_wr_data[0+:`ACTBUF_DATA_LEN];
 
 // DSP primitive configuration (Note: this is the primitive for UltraScale: DSP48E2)
 DSP48E2 #(
@@ -257,9 +256,9 @@ generate
     RAM128X1D_inst (
       .DPO(actbuf_rd_data[ii]),            // Read-only 1-bit data output
       // .SPO(SPO),                  // Rw/ 1-bit data output
-      .A({actbuf_wr_addrh, actbuf_wr_addrl}),      // Read/write port 7-bit address input
+      .A({actbuf_wr_addrh, clkh_toggle}),      // Read/write port 7-bit address input
       .D(actbuf_wr_data_clkh[ii]),         // Write 1-bit data input
-      .DPRA({actbuf_rd_addrh, actbuf_rd_addrl}),   // Read port 7-bit address input
+      .DPRA(actbuf_rd_addr_clkh),   // Read port 7-bit address input
       .WCLK(clk_h),                     // Write clock input
       .WE(actbuf_wr_en)                    // Write enable input
       );
